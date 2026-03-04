@@ -1,0 +1,25 @@
+# Environment (contains secrets!)
+.env
+
+# Database
+*.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Scan artifacts
+scan_pid.txt
+scan_log.txt
+
+# Backup files
+*.backup

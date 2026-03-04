@@ -1,0 +1,1232 @@
+{
+  "run_date": "2026-02-24T18:49:59.251173",
+  "inactivity_days": 60,
+  "total_inactive_users": 113,
+  "total_platforms_scanned": 5,
+  "total_systems": 3,
+  "total_monthly_savings": 4661.88,
+  "total_annual_savings": 55942.56,
+  "orgs": {
+    "Xolv": {
+      "count": 71,
+      "monthly": 4274.68,
+      "annual": 51296.16,
+      "platforms": [
+        {
+          "name": "PagerDuty",
+          "full_name": "PagerDuty",
+          "platform_type": "pagerduty",
+          "inactive_users": 9,
+          "monthly": 368.46,
+          "users": [
+            {
+              "name": "Beatriz Montoya",
+              "email": "beatriz.montoya@xolv.org",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "PagerDuty"
+              ],
+              "cost": 40.94
+            },
+            {
+              "name": "Christopher.Baerwaldt@Xolv.org",
+              "email": "christopher.baerwaldt@xolv.org",
+              "last_active": "",
+              "inactivity_type": "On Escalation Policy \u2014 Inactive 60+ Days",
+              "products": [
+                "PagerDuty"
+              ],
+              "cost": 40.94
+            },
+            {
+              "name": "David Iannucci",
+              "email": "diannucci@xolv.org",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "PagerDuty"
+              ],
+              "cost": 40.94
+            },
+            {
+              "name": "Ethan.LocNguyen@Xolv.org",
+              "email": "ethan.locnguyen@xolv.org",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "PagerDuty"
+              ],
+              "cost": 40.94
+            },
+            {
+              "name": "Finn Tran",
+              "email": "finn.tran@xolv.org",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "PagerDuty"
+              ],
+              "cost": 40.94
+            },
+            {
+              "name": "Jason Weitzman",
+              "email": "jason.weitzman@xolv.org",
+              "last_active": "",
+              "inactivity_type": "On Escalation Policy \u2014 Inactive 60+ Days",
+              "products": [
+                "PagerDuty"
+              ],
+              "cost": 40.94
+            },
+            {
+              "name": "Khoi Ngo",
+              "email": "khoi.ngo@xolv.org",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "PagerDuty"
+              ],
+              "cost": 40.94
+            },
+            {
+              "name": "Kiran Philipponnat",
+              "email": "kiran.philipponnat@xolv.org",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "PagerDuty"
+              ],
+              "cost": 40.94
+            },
+            {
+              "name": "Kyle Risse",
+              "email": "kyle.risse@xolv.org",
+              "last_active": "",
+              "inactivity_type": "On Escalation Policy \u2014 Inactive 60+ Days",
+              "products": [
+                "PagerDuty"
+              ],
+              "cost": 40.94
+            }
+          ]
+        },
+        {
+          "name": "Atlassian",
+          "full_name": "Atlassian (Xolv)",
+          "platform_type": "atlassian",
+          "inactive_users": 62,
+          "monthly": 3906.22,
+          "users": [
+            {
+              "name": "Alexander Parkhomenko",
+              "email": "alex.parkhomenko@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "An Tran",
+              "email": "an.tran@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Andrey Sergienko",
+              "email": "andrey.sergienko@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Andrii Tkachenko",
+              "email": "andrii.tkachenko@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Anne Vuong",
+              "email": "anne.vuong@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Artyom Lysenka",
+              "email": "artyom.lysenka@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Bastian Staeuber-Jermutus",
+              "email": "bastian.jermutus@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Demo Hire1",
+              "email": "demo.hire1@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Denis Plaksia",
+              "email": "denis.plaksia@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Diana Sicevaia",
+              "email": "diana.sicevaia@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Dung Bui",
+              "email": "dung.bui@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "HR@xolv.com",
+              "email": "hr@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Hayk Margaryan",
+              "email": "hayk.margaryan@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Huy Nguyen",
+              "email": "huy.nguyen@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Huy Tran",
+              "email": "huy.tran@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Ivan Ahafonau",
+              "email": "ivan.ahafonau@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Ivan Zubarevic",
+              "email": "ivan.zubarevic@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "James Dao",
+              "email": "james.dao@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Jason Kuan",
+              "email": "shengchieh.kuan@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "John Pham",
+              "email": "john.pham@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Karry Jiang",
+              "email": "karry.jiang@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Kayode JSM",
+              "email": "kayode.faith+jsm@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Kelly Targett",
+              "email": "kelly.targett@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Kenny Dao Nguyen",
+              "email": "kennydao.nguyen@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Leon Tran",
+              "email": "leon.tran@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Maksym Dosiuk",
+              "email": "maksym.dosiuk@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Mykhaylo Malyshev",
+              "email": "mykhaylo.malyshev@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Nam Nguyen",
+              "email": "nam.nguyen@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Nghiem Pham",
+              "email": "nghiem.pham@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Oleksandr Pysmennyi",
+              "email": "oleksandr.pysmennyi@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Prateek Kumar",
+              "email": "prateek.kumar@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Rahul Nagulapally",
+              "email": "rahul.nagulapally@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Sonia Adamson",
+              "email": "sonia.adamson@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Tan Vo",
+              "email": "tan.vo@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Thanh Pham",
+              "email": "thanh.pham@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Tue Dang",
+              "email": "tue.dang@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Uladzislau Dzemidovich",
+              "email": "uladzislau.dzemidovich@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Vitalii Voitsikhovskyi",
+              "email": "vitalii.voitsikhovskyi@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Will Ly",
+              "email": "will.ly@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "William Ngo",
+              "email": "william.ngo@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Zed Vu",
+              "email": "zed.vu@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 80.42,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "An Luong",
+              "email": "an.luong@xolv.com",
+              "last_active": "2025-12-12T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Brian Johnson",
+              "email": "brian.johnson@xolv.com",
+              "last_active": "2025-10-06T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Cuong Pham",
+              "email": "cuong.pham@xolv.com",
+              "last_active": "2025-05-07T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Ethan LocNguyen",
+              "email": "ethan.locnguyen@xolv.com",
+              "last_active": "2025-12-16T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Henry Le",
+              "email": "henry.le@xolv.com",
+              "last_active": "2025-07-21T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Jira Software"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Hien Pham",
+              "email": "hien.pham@xolv.com",
+              "last_active": "2024-10-28T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Jira Software"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Julia Tkach",
+              "email": "julia.tkach@xolv.com",
+              "last_active": "2025-12-02T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Kevin Kuchera",
+              "email": "kevin.kuchera@xolv.com",
+              "last_active": "2025-08-21T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Khoi Ngo",
+              "email": "khoi.ngo@xolv.com",
+              "last_active": "2025-12-16T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Maryna Onyshchenko",
+              "email": "maryna.onyshchenko@xolv.com",
+              "last_active": "2025-11-21T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Megan Wolfe",
+              "email": "megan.wolfe@xolv.com",
+              "last_active": "2025-11-24T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Misha Danyliuk",
+              "email": "misha.danyliuk@xolv.com",
+              "last_active": "2025-11-24T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Nguyen Tran",
+              "email": "nguyen.tran@xolv.com",
+              "last_active": "2025-04-23T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Nhan Nguyen",
+              "email": "nhan.nguyen@xolv.com",
+              "last_active": "2025-06-26T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Phat Ho",
+              "email": "phat.ho@xolv.com",
+              "last_active": "2025-03-24T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Robert Vo",
+              "email": "robert.vo@xolv.com",
+              "last_active": "2025-07-25T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Tam Thanh Nguyen",
+              "email": "tam.nguyen@xolv.com",
+              "last_active": "2025-03-13T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Taras Rozputniy",
+              "email": "taras.rozputniy@xolv.com",
+              "last_active": "2025-11-18T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Tien Pham",
+              "email": "tien.pham@xolv.com",
+              "last_active": "2024-10-28T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Tylia Gardner",
+              "email": "tylia.gardner@xolv.com",
+              "last_active": "2025-11-13T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            },
+            {
+              "name": "Vasyl Chopovenko",
+              "email": "vasyl.chopovenko@xolv.com",
+              "last_active": "2025-11-28T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "Confluence"
+              ],
+              "cost": 29.0,
+              "activity_source": "org_api"
+            }
+          ]
+        },
+        {
+          "name": "GitLab",
+          "full_name": "GitLab (Xolv)",
+          "platform_type": "gitlab",
+          "inactive_users": 0,
+          "monthly": 0,
+          "users": []
+        }
+      ]
+    },
+    "Catalight": {
+      "count": 42,
+      "monthly": 387.2,
+      "annual": 4646.4,
+      "platforms": [
+        {
+          "name": "Atlassian",
+          "full_name": "Atlassian (Catalight)",
+          "platform_type": "atlassian",
+          "inactive_users": 34,
+          "monthly": 155.2,
+          "users": [
+            {
+              "name": "Brian Johnson",
+              "email": "brian.johnson@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Colby Langen",
+              "email": "colby.langen@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "David Campbell",
+              "email": "david.campbell@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Hayk Margaryan",
+              "email": "hayk.margaryan@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Hien Pham",
+              "email": "hien.pham@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Ike Anyanwu",
+              "email": "nnaemeka.anyanwu@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "JJ Jamorabon",
+              "email": "jj.jamorabon@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "John Pham",
+              "email": "john.pham@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Kenny Dao Nguyen",
+              "email": "kennydao.nguyen@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 4.8,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Lixther Mojado",
+              "email": "lixther.mojado@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Melinda Heider",
+              "email": "melinda.heider@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Michael Baldoza",
+              "email": "michael.baldoza@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Mike McGarry",
+              "email": "mike.mcgarry@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Nicole Maxwell",
+              "email": "nicole.maxwell@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 4.8,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Paul Gerios",
+              "email": "paul.gerios@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Peter Scholtens",
+              "email": "peter.scholtens@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 4.8,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Phillip Tsan",
+              "email": "phillip.tsan@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Tabitha Makanani",
+              "email": "tabitha.makanani@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Terry Ta",
+              "email": "terry.ta@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Tj Yanuska",
+              "email": "tj.yanuska@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Tracy Washington",
+              "email": "tracy.washington@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Vigu Roachthavilit",
+              "email": "vignesh.roachthavilit@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 4.8,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "Wesley Galles",
+              "email": "wesley.galles@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence",
+                "Jira Software"
+              ],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "baldoza",
+              "email": "baldoza@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "eric.thong",
+              "email": "eric.thong@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "khoi",
+              "email": "khoi@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "lance",
+              "email": "lance@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "lissa",
+              "email": "lissa@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "phill",
+              "email": "phill@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 4.8,
+              "activity_source": "jql_cql"
+            },
+            {
+              "name": "vanessa",
+              "email": "vanessa@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [],
+              "cost": 4.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Andrew Nguyen",
+              "email": "andrew.nguyen@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Jira Software"
+              ],
+              "cost": 2.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Kris Leungwattanakij",
+              "email": "kris.leungwattanakij@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Jira Software"
+              ],
+              "cost": 2.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Security",
+              "email": "security@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Jira Software"
+              ],
+              "cost": 2.8,
+              "activity_source": "jql_cql (cross-site org)"
+            },
+            {
+              "name": "Zabiullah Sadat",
+              "email": "zabiullah.sadat@xolv.com",
+              "last_active": "",
+              "inactivity_type": "No Login Recorded",
+              "products": [
+                "Confluence"
+              ],
+              "cost": 2.8,
+              "activity_source": "jql_cql (cross-site org)"
+            }
+          ]
+        },
+        {
+          "name": "GitLab",
+          "full_name": "GitLab (Catalight)",
+          "platform_type": "gitlab",
+          "inactive_users": 8,
+          "monthly": 232.0,
+          "users": [
+            {
+              "name": "Andrii Tkachenko",
+              "email": "andrii.tkachenko@xolv.com",
+              "last_active": "2025-09-12T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "GitLab"
+              ],
+              "cost": 29.0,
+              "role": "Guest",
+              "username": "Andrii.Tkachenko1"
+            },
+            {
+              "name": "David Tse",
+              "email": "david.tse@xolv.org",
+              "last_active": "2025-08-31T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "GitLab"
+              ],
+              "cost": 29.0,
+              "role": "Developer",
+              "username": "David.Tse"
+            },
+            {
+              "name": "Dung Bui",
+              "email": "dung.bui@xolv.org",
+              "last_active": "2025-07-14T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "GitLab"
+              ],
+              "cost": 29.0,
+              "role": "Developer",
+              "username": "Dung.Bui3"
+            },
+            {
+              "name": "Eric Pearson",
+              "email": "eric.pearson@xolv.org",
+              "last_active": "2025-11-04T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "GitLab"
+              ],
+              "cost": 29.0,
+              "role": "Developer",
+              "username": "Eric.Pearson"
+            },
+            {
+              "name": "Jackie Perry Carrillo",
+              "email": "jackie.perrycarrillo@xolv.com",
+              "last_active": "2025-08-26T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "GitLab"
+              ],
+              "cost": 29.0,
+              "role": "Developer",
+              "username": "JackiePerryCarrillo"
+            },
+            {
+              "name": "Maryna Onyshchenko",
+              "email": "maryna.onyshchenko@xolv.org",
+              "last_active": "2025-10-28T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "GitLab"
+              ],
+              "cost": 29.0,
+              "role": "Developer",
+              "username": "Maryna.Onyshchenko"
+            },
+            {
+              "name": "Nguyen  Tran",
+              "email": "nguyen.tran@xolv.com",
+              "last_active": "2025-09-25T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "GitLab"
+              ],
+              "cost": 29.0,
+              "role": "Developer",
+              "username": "nguyentran0818"
+            },
+            {
+              "name": "Roselyn Ukwedeh",
+              "email": "roselyn.ukwedeh@xolv.org",
+              "last_active": "2025-08-04T00:00:00",
+              "inactivity_type": "Inactive 60+ Days",
+              "products": [
+                "GitLab"
+              ],
+              "cost": 29.0,
+              "role": "Developer",
+              "username": "Roselyn.Ukwedeh"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

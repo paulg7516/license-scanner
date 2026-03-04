@@ -1,0 +1,240 @@
+[
+  {
+    "date": "2026-02-23T21:40:51.839087Z",
+    "total_inactive_users": 108,
+    "total_monthly_savings": 4103.52,
+    "total_annual_savings": 49242.24,
+    "total_platforms_scanned": 5,
+    "orgs": {
+      "Xolv": {
+        "count": 65,
+        "monthly": 3689.32
+      },
+      "Catalight": {
+        "count": 43,
+        "monthly": 414.2
+      }
+    }
+  },
+  {
+    "date": "2026-02-23T21:46:25.125862Z",
+    "total_inactive_users": 112,
+    "total_monthly_savings": 4425.2,
+    "total_annual_savings": 53102.4,
+    "total_platforms_scanned": 5,
+    "orgs": {
+      "Xolv": {
+        "count": 69,
+        "monthly": 4011.0
+      },
+      "Catalight": {
+        "count": 43,
+        "monthly": 414.2
+      }
+    }
+  },
+  {
+    "date": "2026-02-23T21:46:26.493930Z",
+    "total_inactive_users": 116,
+    "total_monthly_savings": 4800.3,
+    "total_annual_savings": 57603.6,
+    "total_platforms_scanned": 5,
+    "orgs": {
+      "Xolv": {
+        "count": 73,
+        "monthly": 4384.1
+      },
+      "Catalight": {
+        "count": 43,
+        "monthly": 416.2
+      }
+    }
+  },
+  {
+    "date": "2026-02-23T23:20:40.763759Z",
+    "total_inactive_users": 107,
+    "total_monthly_savings": 4062.58,
+    "total_annual_savings": 48750.96,
+    "total_platforms_scanned": 5,
+    "orgs": {
+      "Xolv": {
+        "count": 64,
+        "monthly": 3648.38
+      },
+      "Catalight": {
+        "count": 43,
+        "monthly": 414.2
+      }
+    }
+  },
+  {
+    "date": "2026-02-23T23:42:53.390820Z",
+    "total_inactive_users": 107,
+    "total_monthly_savings": 4062.58,
+    "total_annual_savings": 48750.96,
+    "total_platforms_scanned": 5,
+    "orgs": {
+      "Xolv": {
+        "count": 64,
+        "monthly": 3648.38
+      },
+      "Catalight": {
+        "count": 43,
+        "monthly": 414.2
+      }
+    }
+  },
+  {
+    "date": "2026-02-23T23:50:24.206708Z",
+    "total_inactive_users": 107,
+    "total_monthly_savings": 4062.58,
+    "total_annual_savings": 48750.96,
+    "total_platforms_scanned": 5,
+    "orgs": {
+      "Xolv": {
+        "count": 64,
+        "monthly": 3648.38
+      },
+      "Catalight": {
+        "count": 43,
+        "monthly": 414.2
+      }
+    }
+  },
+  {
+    "date": "2026-02-23T23:58:31.599261Z",
+    "total_inactive_users": 107,
+    "total_monthly_savings": 4062.58,
+    "total_annual_savings": 48750.96,
+    "total_platforms_scanned": 5,
+    "orgs": {
+      "Xolv": {
+        "count": 64,
+        "monthly": 3648.38
+      },
+      "Catalight": {
+        "count": 43,
+        "monthly": 414.2
+      }
+    }
+  },
+  {
+    "date": "2026-02-24T00:13:43.719330Z",
+    "total_inactive_users": 107,
+    "total_monthly_savings": 4064.58,
+    "total_annual_savings": 48774.96,
+    "total_platforms_scanned": 5,
+    "orgs": {
+      "Xolv": {
+        "count": 64,
+        "monthly": 3648.38
+      },
+      "Catalight": {
+        "count": 43,
+        "monthly": 416.2
+      }
+    }
+  },
+  {
+    "date": "2026-02-24T00:23:50.195105Z",
+    "total_inactive_users": 107,
+    "total_monthly_savings": 4062.58,
+    "total_annual_savings": 48750.96,
+    "total_platforms_scanned": 5,
+    "orgs": {
+      "Xolv": {
+        "count": 64,
+        "monthly": 3648.38
+      },
+      "Catalight": {
+        "count": 43,
+        "monthly": 414.2
+      }
+    }
+  },
+  {
+    "date": "2026-02-24T00:36:46.251064Z",
+    "total_inactive_users": 107,
+    "total_monthly_savings": 4062.58,
+    "total_annual_savings": 48750.96,
+    "total_platforms_scanned": 5,
+    "orgs": {
+      "Xolv": {
+        "count": 64,
+        "monthly": 3648.38
+      },
+      "Catalight": {
+        "count": 43,
+        "monthly": 414.2
+      }
+    }
+  },
+  {
+    "date": "2026-02-24T00:37:10.561794Z",
+    "total_inactive_users": 110,
+    "total_monthly_savings": 4303.84,
+    "total_annual_savings": 51646.08,
+    "total_platforms_scanned": 5,
+    "orgs": {
+      "Xolv": {
+        "count": 67,
+        "monthly": 3889.64
+      },
+      "Catalight": {
+        "count": 43,
+        "monthly": 414.2
+      }
+    }
+  },
+  {
+    "date": "2026-02-24T03:13:57.984030Z",
+    "total_inactive_users": 108,
+    "total_monthly_savings": 4103.52,
+    "total_annual_savings": 49242.24,
+    "total_platforms_scanned": 5,
+    "orgs": {
+      "Xolv": {
+        "count": 65,
+        "monthly": 3689.32
+      },
+      "Catalight": {
+        "count": 43,
+        "monthly": 414.2
+      }
+    }
+  },
+  {
+    "date": "2026-02-25T02:49:59.237639Z",
+    "total_inactive_users": 111,
+    "total_monthly_savings": 4499.04,
+    "total_annual_savings": 53988.48,
+    "total_platforms_scanned": 5,
+    "orgs": {
+      "Xolv": {
+        "count": 69,
+        "monthly": 4113.84
+      },
+      "Catalight": {
+        "count": 42,
+        "monthly": 385.2
+      }
+    }
+  },
+  {
+    "date": "2026-02-25T02:49:59.253202Z",
+    "total_inactive_users": 113,
+    "total_monthly_savings": 4661.88,
+    "total_annual_savings": 55942.56,
+    "total_platforms_scanned": 5,
+    "orgs": {
+      "Xolv": {
+        "count": 71,
+        "monthly": 4274.68
+      },
+      "Catalight": {
+        "count": 42,
+        "monthly": 387.2
+      }
+    }
+  }
+]
