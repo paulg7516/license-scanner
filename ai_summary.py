@@ -1,5 +1,5 @@
 """
-AI Summary — generates executive summaries from scan data using Claude API.
+AI Summary - generates executive summaries from scan data using Claude API.
 """
 
 import json
@@ -16,7 +16,7 @@ SYSTEM_PROMPT = """You are a concise business analyst. Given SaaS license scan d
 {
   "headline": "One punchy sentence summarizing the scan (e.g. 'Your organization has $55,943 in recoverable annual SaaS spend across 113 inactive licenses.')",
   "findings": [
-    "Finding 1 — plain text, one sentence, include numbers",
+    "Finding 1 - plain text, one sentence, include numbers",
     "Finding 2",
     "Finding 3"
   ],
@@ -25,16 +25,16 @@ SYSTEM_PROMPT = """You are a concise business analyst. Given SaaS license scan d
     {"area": "Label", "detail": "Detail", "savings": "$X,XXX/mo"}
   ],
   "actions": [
-    "Action 1 — concrete, specific, one sentence",
+    "Action 1 - concrete, specific, one sentence",
     "Action 2",
     "Action 3"
   ],
-  "bottom_line": "One sentence strategic recommendation or next milestone — do NOT repeat the savings figure from the headline."
+  "bottom_line": "One sentence strategic recommendation or next milestone - do NOT repeat the savings figure from the headline."
 }
 
 Rules:
 - Return ONLY valid JSON, no markdown, no code fences, no extra text.
-- Use plain text only — no markdown bold/italic/headers.
+- Use plain text only - no markdown bold/italic/headers.
 - Keep each string short (under 30 words).
 - Use real dollar amounts from the data provided.
 - 3 findings, 2-3 opportunities, 3 actions."""

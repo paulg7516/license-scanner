@@ -356,7 +356,7 @@ st.markdown(f"""
     .hdr-right {{
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        gap: 1rem;
     }}
     .hdr-name {{
         font-size: 0.88rem;
@@ -530,7 +530,7 @@ st.markdown(f"""
     button[data-testid="stBaseButton-secondary"] {{ font-family: 'Segoe UI', sans-serif !important; border-radius: var(--rs) !important; font-size: 0.84rem !important; background: var(--bg-c) !important; color: var(--t2) !important; border: 1px solid var(--bdr) !important; }}
     button[data-testid="stBaseButton-secondary"]:hover {{ background: var(--bg-ch) !important; color: var(--t1) !important; }}
 
-    /* AI Generate button — gradient */
+    /* AI Generate button - gradient */
     button[kind="primary"][data-testid="stBaseButton-primary"].st-key-btn_ai_gen,
     .st-key-btn_ai_gen button,
     .st-key-btn_ai_gen button[data-testid="stBaseButton-primary"] {{
@@ -829,7 +829,7 @@ st.markdown(f"""
     .conf-low {{ background:rgba(248,113,113,0.10);color:#FCA5A5;border:1px solid rgba(248,113,113,0.22); }}
     .conf-low:hover {{ box-shadow:0 2px 8px rgba(248,113,113,0.14); }}
 
-    /* AI Recommendation banner — matches AI Insights headline card */
+    /* AI Recommendation banner - matches AI Insights headline card */
     .conf-banner {{ position:relative;padding:0.85rem 1.1rem 0.65rem;background:linear-gradient(135deg,#1a1425,#151020);border:1.5px solid #3D2E5C;border-radius:12px;margin:0.1rem 0 0.25rem 0;overflow:hidden;box-shadow:0 2px 12px rgba(169,39,178,0.08); }}
     .conf-banner::before {{ content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#A927B2,#F59E0B,#A927B2); }}
     .conf-banner-top {{ display:flex;align-items:center;gap:0.4rem;margin-bottom:0.45rem; }}
@@ -842,7 +842,7 @@ st.markdown(f"""
     .conf-banner-ct {{ font-size:1.05rem;font-weight:800;line-height:1; }}
     .conf-banner-label {{ font-size:0.6rem;font-weight:600;letter-spacing:0.03em;opacity:0.85; }}
 
-    /* AI Score column — visually distinct cell */
+    /* AI Score column - visually distinct cell */
     .ai-col {{ background:linear-gradient(135deg,#1f1528,#1a1225);border:1px solid rgba(169,39,178,0.25);border-radius:6px;padding:5px 8px;margin:-11px -8px 0;min-height:34px;display:flex;align-items:center;justify-content:center;width:calc(100% + 16px); }}
     .ai-col-hdr {{ background:linear-gradient(135deg,#251830,#1f1428);border:1px solid rgba(169,39,178,0.3);border-radius:6px;padding:0 8px;margin:-11px -8px 0;min-height:20px;display:flex;align-items:center;justify-content:center;width:calc(100% + 16px); }}
     .ai-score-hdr {{ display:inline-flex;align-items:center;gap:4px; }}
@@ -1075,7 +1075,7 @@ def render_compact_health_strip():
 # AI Insights
 # ------------------------------------------------------------------
 def _ai_icon(size=16, _color=None):
-    """AI sparkle icon — three 4-pointed stars with cyan-to-purple gradient."""
+    """AI sparkle icon - three 4-pointed stars with cyan-to-purple gradient."""
     return (
         f'<svg width="{size}" height="{size}" viewBox="0 0 120 120" fill="none" '
         f'style="display:inline-block;vertical-align:middle;">'
@@ -1277,7 +1277,7 @@ def show_insights():
             </div>""", unsafe_allow_html=True)
 
     else:
-        # No summary yet — show empty state
+        # No summary yet - show empty state
         st.markdown(f"""<div style="text-align:center;padding:3rem 2rem;background:#111827;border:1.5px dashed #2A3548;border-radius:14px;margin-top:0.75rem;">
             <div style="margin-bottom:0.75rem;">{_ai_icon(40, '#F59E0B')}</div>
             <div style="font-size:1.1rem;font-weight:600;color:#F1F5F9;margin-bottom:0.4rem;">No Summary Generated Yet</div>
@@ -2546,10 +2546,10 @@ def show_audit():
 # Login - polished card (container styled by CONTAINER_CSS above)
 # ------------------------------------------------------------------
 def show_login_screen_with_dev():
-    """Login page — centered card layout."""
+    """Login page - centered card layout."""
     logo = f'<img src="data:image/png;base64,{LOGO_WHITE}" alt="Xolv" style="height:46px;" />' if LOGO_WHITE else '<span style="font-size:1.5rem;font-weight:800;color:#F1F5F9;letter-spacing:0.05em;">XOLV</span>'
 
-    # AI sparkle — simple inline SVG (no <defs> to avoid Streamlit parse issues)
+    # AI sparkle - simple inline SVG (no <defs> to avoid Streamlit parse issues)
     ai_star = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:middle;"><path d="M12 2L14 9L21 9L15.5 13.5L17.5 21L12 16.5L6.5 21L8.5 13.5L3 9L10 9Z" fill="url(#aig)"/><defs><linearGradient id="aig" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00C9DB"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient></defs></svg>'
 
     # Check if Azure AD is properly configured

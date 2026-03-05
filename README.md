@@ -1,6 +1,6 @@
 # 🔑 License Scanner - Token Rotation Portal
 
-A self-service web UI that lets system owners rotate their own API tokens — so you're not the bottleneck.
+A self-service web UI that lets system owners rotate their own API tokens - so you're not the bottleneck.
 
 Built with **Streamlit** (Python), secured with **Azure AD** login and **AES encryption** for stored tokens.
 
@@ -52,7 +52,7 @@ The app opens at **http://localhost:8501**. Log in using the access code set in 
    - Redirect URI: `http://localhost:8501` (add your production URL later)
    - Supported account types: Single tenant
 3. After creation, note the **Application (client) ID** and **Directory (tenant) ID**
-4. Go to **Certificates & Secrets → New client secret** — copy the secret value
+4. Go to **Certificates & Secrets → New client secret** - copy the secret value
 5. Put all three values in your `.env` file
 
 ### Optional: Restrict access by Azure AD group
@@ -82,7 +82,7 @@ SYSTEMS = {
 }
 ```
 
-That's it — the UI picks it up automatically.
+That's it - the UI picks it up automatically.
 
 ---
 
@@ -174,7 +174,7 @@ license-scanner-ui/
 
 ## Security Notes
 
-- Tokens are **encrypted at rest** using Fernet (AES-128-CBC) — even if someone gets the database file, they can't read the tokens without the encryption key
+- Tokens are **encrypted at rest** using Fernet (AES-128-CBC) - even if someone gets the database file, they can't read the tokens without the encryption key
 - All token changes are **audit-logged** with timestamp, user email, and action
 - Azure AD groups can **restrict access** so only designated owners can rotate specific tokens
 - Access code authentication provides a shared login for internal users
