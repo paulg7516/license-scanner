@@ -206,7 +206,7 @@ license-scanner/
 
 ### Data Flow
 
-1. An external scanner (`system_watchdog`) connects to platform APIs and writes `scan_results.json`
+1. An external scanner (`system_scanner`) connects to platform APIs and writes `scan_results.json`
 2. The UI reads and renders scan results -it never calls platform APIs directly
 3. User actions (status changes, rotations) are saved to JSON files and SQLite
 4. The audit log captures all state changes with who, what, and when
@@ -287,6 +287,6 @@ SYSTEMS = {
 }
 ```
 
-2. **Update the scanner** (`system_watchdog`) to connect to the new platform's API and include it in scan results
+2. **Update the scanner** (`system_scanner`) to connect to the new platform's API and include it in scan results
 
 3. **Deploy** -the UI automatically picks up new systems from the config. No app.py changes needed.

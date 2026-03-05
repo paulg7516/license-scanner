@@ -58,7 +58,7 @@ The app opens at **http://localhost:8501**. Log in using the access code set in 
 ### Optional: Restrict access by Azure AD group
 
 1. Go to **Token Configuration → Add groups claim → Security groups**
-2. Create groups in Azure AD like `Watchdog-Jira-Owners`
+2. Create groups in Azure AD like `Scanner-Jira-Owners`
 3. Copy each group's **Object ID** into the `owner_group` field in `config.py`
 
 ---
