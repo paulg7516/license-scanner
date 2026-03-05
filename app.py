@@ -18,6 +18,7 @@ from pathlib import Path
 import config
 import auth
 import storage
+import ai_summary
 
 
 # ── User Action Tracking ──────────────────────────────────────────
@@ -54,6 +55,32 @@ def status_pill_html(status):
     """Render a colored status pill."""
     s = STATUS_STYLES.get(status, STATUS_STYLES["pending"])
     return f'<span style="background:{s["bg"]};color:{s["color"]};border:1px solid {s["border"]};padding:1px 8px;border-radius:4px;font-size:0.68rem;font-weight:600;white-space:nowrap;">{s["label"]}</span>'
+
+
+CONFIDENCE_MAP = {
+    "No Login Recorded":                      {"level": "high",   "score": 95, "label": "Safe to deactivate"},
+    "Inactive 60+ Days":                      {"level": "medium", "score": 75, "label": "Review recommended"},
+    "On Escalation Policy - Inactive 60+ Days": {"level": "low",  "score": 50, "label": "May still be needed"},
+}
+CONFIDENCE_SORT_ORDER = {"high": 0, "medium": 1, "low": 2}
+
+def confidence_score(inactivity_type, last_active):
+    """Return confidence dict based on inactivity type and last_active."""
+    base = CONFIDENCE_MAP.get(inactivity_type, {"level": "medium", "score": 75, "label": "Review recommended"})
+    score = base["score"]
+    if not last_active:
+        score = min(score + 5, 99)
+    return {"level": base["level"], "score": score, "label": base["label"]}
+
+def confidence_pill_html(conf):
+    """Render a colored confidence pill styled as an AI recommendation."""
+    icon = {"high": "&#10003;", "medium": "&#9679;", "low": "&#9888;"}.get(conf["level"], "&#9679;")
+    return (
+        f'<span class="conf-pill conf-{conf["level"]}" title="{conf["label"]}">'
+        f'<span class="conf-icon">{icon}</span>'
+        f'{conf["score"]}%'
+        f'</span>'
+    )
 
 
 # ── User Registry (auto-populated on login) ──────────────────────
@@ -192,19 +219,38 @@ if IS_LOGGED_IN:
     """
 else:
     CONTAINER_CSS = """
+    .stApp > header {{ display: none !important; }}
+    .stApp {{ background: #0F172A !important; }}
     .main .block-container {{
-        padding: 3rem 1rem 2rem 1rem !important;
-        max-width: 500px !important;
-        margin: 0 auto !important;
-        text-align: center;
+        padding-top: 3rem !important;
     }}
-    /* Make Streamlit widgets match card */
+    /* Hide column borders/gaps for login layout */
+    .main [data-testid="stHorizontalBlock"] {{
+        gap: 0 !important;
+    }}
+    /* Widget overrides inside login card */
     .main .block-container .stTextInput > div > div {{
-        background: #222E45 !important;
-        border-color: #4A6080 !important;
+        background: #0F172A !important;
+        border: 1.5px solid #334155 !important;
+        border-radius: 8px !important;
+    }}
+    .main .block-container .stTextInput > div > div:focus-within {{
+        border-color: #028090 !important;
+        box-shadow: 0 0 0 3px rgba(2,128,144,0.12) !important;
+    }}
+    .main .block-container .stTextInput input {{
+        color: #E2E8F0 !important; font-size: 0.88rem !important;
     }}
     .main .block-container button[data-testid="stBaseButton-primary"] {{
         border-radius: 8px !important;
+        background: #028090 !important;
+        border: none !important; font-weight: 600 !important;
+        padding: 0.65rem 1.5rem !important;
+        transition: all 150ms ease !important;
+    }}
+    .main .block-container button[data-testid="stBaseButton-primary"]:hover {{
+        background: #03939F !important;
+        box-shadow: 0 4px 12px rgba(2,128,144,0.3) !important;
     }}
     """
 
@@ -409,7 +455,7 @@ st.markdown(f"""
     button[data-testid="stBaseButton-primary"]:hover {{ background: var(--teal-h) !important; box-shadow: 0 4px 16px rgba(2,128,144,0.35) !important; }}
     button[data-testid="stBaseButton-primary"]:disabled {{ background: var(--bdr) !important; color: var(--t4) !important; box-shadow: none !important; }}
 
-    /* Tab colors - Scan Overview (green), Rotate Tokens (teal), Audit Log (purple) */
+    /* Tab colors - Scan Overview (green), Rotate Tokens (teal), Audit Log (purple), AI Insights (orange) */
     div[data-testid="column"]:nth-child(1) button[data-testid="stBaseButton-primary"],
     div[data-testid="stColumn"]:nth-child(1) button[data-testid="stBaseButton-primary"] {{
         background: #10B981 !important; box-shadow: 0 2px 8px rgba(16,185,129,0.25) !important;
@@ -426,22 +472,65 @@ st.markdown(f"""
     div[data-testid="stColumn"]:nth-child(3) button[data-testid="stBaseButton-primary"]:hover {{
         background: #9320A1 !important; box-shadow: 0 4px 16px rgba(169,39,178,0.35) !important;
     }}
+    div[data-testid="column"]:nth-child(4) button[data-testid="stBaseButton-primary"],
+    div[data-testid="stColumn"]:nth-child(4) button[data-testid="stBaseButton-primary"],
+    div[data-testid="column"]:nth-child(4) button[data-testid="stBaseButton-secondary"],
+    div[data-testid="stColumn"]:nth-child(4) button[data-testid="stBaseButton-secondary"] {{
+        padding-left: 2rem !important;
+    }}
+    div[data-testid="column"]:nth-child(4) button[data-testid="stBaseButton-primary"]::before,
+    div[data-testid="stColumn"]:nth-child(4) button[data-testid="stBaseButton-primary"]::before,
+    div[data-testid="column"]:nth-child(4) button[data-testid="stBaseButton-secondary"]::before,
+    div[data-testid="stColumn"]:nth-child(4) button[data-testid="stBaseButton-secondary"]::before {{
+        content: '';
+        display: inline-block;
+        width: 16px; height: 16px;
+        margin-right: 6px;
+        vertical-align: middle;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0' y1='1' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%2300C9DB'/%3E%3Cstop offset='100%25' stop-color='%235B6CF7'/%3E%3C/linearGradient%3E%3ClinearGradient id='b' x1='0' y1='1' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%235B6CF7'/%3E%3Cstop offset='100%25' stop-color='%238B5CF6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M45 10C48 30 62 48 80 52C62 56 48 70 45 92C42 70 28 56 8 52C28 48 42 30 45 10Z' fill='url(%23a)'/%3E%3Cpath d='M80 2C82 14 90 22 102 25C90 28 82 36 80 50C78 36 70 28 58 25C70 22 78 14 80 2Z' fill='url(%23b)'/%3E%3Cpath d='M85 72C86 80 90 84 98 86C90 88 86 92 85 100C84 92 80 88 72 86C80 84 84 80 85 72Z' fill='%237C3AED'/%3E%3C/svg%3E");
+        background-size: contain;
+        background-repeat: no-repeat;
+    }}
+    div[data-testid="column"]:nth-child(4) button[data-testid="stBaseButton-primary"],
+    div[data-testid="stColumn"]:nth-child(4) button[data-testid="stBaseButton-primary"] {{
+        background: #F59E0B !important; box-shadow: 0 2px 8px rgba(245,158,11,0.25) !important;
+    }}
+    div[data-testid="column"]:nth-child(4) button[data-testid="stBaseButton-primary"]:hover,
+    div[data-testid="stColumn"]:nth-child(4) button[data-testid="stBaseButton-primary"]:hover {{
+        background: #D97706 !important; box-shadow: 0 4px 16px rgba(245,158,11,0.35) !important;
+    }}
 
     button[data-testid="stBaseButton-secondary"] {{ font-family: 'Segoe UI', sans-serif !important; border-radius: var(--rs) !important; font-size: 0.84rem !important; background: var(--bg-c) !important; color: var(--t2) !important; border: 1px solid var(--bdr) !important; }}
     button[data-testid="stBaseButton-secondary"]:hover {{ background: var(--bg-ch) !important; color: var(--t1) !important; }}
 
-    /* Sign out - red text (4th column) */
+    /* AI Generate button — gradient */
+    button[kind="primary"][data-testid="stBaseButton-primary"].st-key-btn_ai_gen,
+    .st-key-btn_ai_gen button,
+    .st-key-btn_ai_gen button[data-testid="stBaseButton-primary"] {{
+        background: linear-gradient(135deg, #00C9DB, #5B6CF7, #8B5CF6) !important;
+        color: #fff !important;
+        font-weight: 600 !important;
+        border: none !important;
+        box-shadow: 0 2px 12px rgba(91,108,247,0.3) !important;
+    }}
+    .st-key-btn_ai_gen button:hover,
+    .st-key-btn_ai_gen button[data-testid="stBaseButton-primary"]:hover {{
+        box-shadow: 0 4px 20px rgba(91,108,247,0.45) !important;
+        filter: brightness(1.1) !important;
+    }}
+
+    /* Sign out - red text (5th column) */
     div[data-testid="column"]:last-child button[data-testid="stBaseButton-secondary"],
     div[data-testid="stColumn"]:last-child button[data-testid="stBaseButton-secondary"],
-    div[data-testid="column"]:nth-child(4) button[data-testid="stBaseButton-secondary"],
-    div[data-testid="stColumn"]:nth-child(4) button[data-testid="stBaseButton-secondary"] {{
+    div[data-testid="column"]:nth-child(5) button[data-testid="stBaseButton-secondary"],
+    div[data-testid="stColumn"]:nth-child(5) button[data-testid="stBaseButton-secondary"] {{
         color: #EF4444 !important;
         border-color: rgba(239,68,68,0.3) !important;
     }}
     div[data-testid="column"]:last-child button[data-testid="stBaseButton-secondary"]:hover,
     div[data-testid="stColumn"]:last-child button[data-testid="stBaseButton-secondary"]:hover,
-    div[data-testid="column"]:nth-child(4) button[data-testid="stBaseButton-secondary"]:hover,
-    div[data-testid="stColumn"]:nth-child(4) button[data-testid="stBaseButton-secondary"]:hover {{
+    div[data-testid="column"]:nth-child(5) button[data-testid="stBaseButton-secondary"]:hover,
+    div[data-testid="stColumn"]:nth-child(5) button[data-testid="stBaseButton-secondary"]:hover {{
         background: rgba(239,68,68,0.1) !important;
         border-color: rgba(239,68,68,0.5) !important;
         color: #F87171 !important;
@@ -467,13 +556,127 @@ st.markdown(f"""
     .dev-lbl {{ font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--warn); margin-bottom: 0.1rem; }}
     .dev-txt {{ font-size: 0.82rem; color: #FBBF24; }}
 
-    /* -- Login text classes -- */
-    .login-logo {{ margin-bottom: 2rem; }}
-    .login-logo img {{ height: 46px; }}
-    .login-t {{ font-size: 1.1rem; font-weight: 600; color: var(--t1); margin-bottom: 0.35rem; }}
-    .login-s {{ font-size: 0.88rem; color: var(--t2); line-height: 1.5; margin-bottom: 1.5rem; }}
-    .login-div {{ height: 1px; background: var(--bdr); margin: 0 0 1.5rem; }}
-    .login-h {{ font-size: 0.8rem; color: var(--t4); }}
+    /* -- Login card -- */
+    .lcard {{
+        background: #1E293B;
+        border: 1.5px solid #334155;
+        border-radius: 16px;
+        padding: 2.5rem 2rem 1.75rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        margin-bottom: 0.75rem;
+    }}
+    .lcard-bar {{
+        position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, #028090, #A927B2, #F25239);
+    }}
+    .lcard-logo {{ margin-bottom: 1.75rem; }}
+    .lcard-logo img {{ height: 46px; }}
+    .lcard-title {{
+        font-size: 1.35rem; font-weight: 700; color: #F1F5F9;
+        margin-bottom: 0.35rem; letter-spacing: -0.02em;
+    }}
+    .lcard-title span {{
+        color: #F1F5F9;
+    }}
+    .lcard-sub {{
+        font-size: 0.84rem; color: #94A3B8; line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }}
+    /* Feature pills */
+    .lcard-pills {{
+        display: flex; gap: 0.45rem; justify-content: center;
+        flex-wrap: wrap; margin-bottom: 1.75rem;
+    }}
+    .lcard-pill {{
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(255,255,255,0.04); border: 1px solid rgba(148,163,184,0.1);
+        border-radius: 100px; padding: 0.3rem 0.75rem;
+    }}
+    .lcard-pill-dot {{ width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }}
+    .lcard-pill-text {{ font-size: 0.72rem; color: #94A3B8; font-weight: 500; }}
+    /* AI pill gradient text */
+    .lcard-pill-ai .lcard-pill-text {{
+        background: linear-gradient(90deg, #00C9DB, #5B6CF7, #8B5CF6);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text; font-weight: 600;
+    }}
+    /* Divider */
+    .lcard-div {{
+        height: 1px; background: linear-gradient(90deg, transparent, #334155, transparent);
+        margin: 0 0 1.75rem;
+    }}
+    /* SSO button */
+    .lcard-sso {{
+        display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+        background: #FFFFFF; color: #1A1A1A;
+        border: 1.5px solid #E2E8F0; border-radius: 8px;
+        padding: 0.7rem 2rem;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        font-size: 0.88rem; font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        transition: all 200ms ease;
+    }}
+    .lcard-sso:hover {{
+        background: #F8FAFC; border-color: #CBD5E1;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        transform: translateY(-1px);
+    }}
+    .lcard-or {{
+        display: flex; align-items: center; gap: 0.75rem;
+        margin: 1.25rem 0 0;
+    }}
+    .lcard-or-line {{ flex: 1; height: 1px; background: #283548; }}
+    .lcard-or-text {{
+        font-size: 0.65rem; color: #64748B; text-transform: uppercase;
+        letter-spacing: 0.08em; font-weight: 600;
+    }}
+    /* Dev badge + footer */
+    .lcard-dev {{
+        background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.18);
+        border-radius: 8px; padding: 0.5rem 0.85rem; margin-bottom: 0.6rem;
+        text-align: left;
+    }}
+    .lcard-dev span {{
+        font-size: 0.58rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.08em; color: #D97706;
+    }}
+    /* Access code input */
+    .lcard-input {{
+        width: 70%; padding: 0.7rem 1rem; font-size: 0.88rem;
+        background: #0F172A; color: #E2E8F0;
+        border: 1.5px solid #334155; border-radius: 8px;
+        outline: none; box-sizing: border-box;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        transition: border-color 200ms ease, box-shadow 200ms ease;
+    }}
+    .lcard-input::placeholder {{ color: #64748B; }}
+    .lcard-input:focus {{
+        border-color: #028090;
+        box-shadow: 0 0 0 3px rgba(2,128,144,0.12);
+    }}
+    /* Sign in button */
+    .lcard-btn {{
+        width: 70%; padding: 0.7rem 1.5rem; margin-top: 0.6rem;
+        font-size: 0.88rem; font-weight: 600; color: #FFFFFF;
+        background: #028090; border: none; border-radius: 8px;
+        cursor: pointer; font-family: 'Segoe UI', system-ui, sans-serif;
+        transition: all 150ms ease;
+    }}
+    .lcard-btn:hover {{
+        background: #03939F;
+        box-shadow: 0 4px 12px rgba(2,128,144,0.3);
+    }}
+    .lcard-error {{
+        color: #F87171; font-size: 0.78rem; margin-top: 0.5rem;
+    }}
+    .lcard-footer {{
+        text-align: center; margin-top: 1.5rem;
+        font-size: 0.64rem; color: #475569;
+    }}
 
     .stAlert {{ border-radius: var(--rs) !important; }}
 
@@ -607,10 +810,44 @@ st.markdown(f"""
     .tcell {{ font-size: 0.84rem; color: #94A3B8; line-height: 1.35; min-height: 34px; padding: 0; margin-top: -11px; word-break: break-word; display: flex; align-items: center; }}
     .tcell-name {{ color: #F1F5F9; font-weight: 500; }}
     .tcell-email {{ font-size: 0.8rem; }}
-    .tcell-cost {{ color: #10B981; font-weight: 600; text-align: right; justify-content: flex-end; }}
+    .tcell-cost {{ color: #10B981; font-weight: 600; text-align: left; justify-content: flex-start; }}
     .tcell-plat {{ gap: 5px; }}
     .tcell-plat img {{ width: 14px; height: 14px; border-radius: 2px; }}
     .tcell-dim {{ opacity: 0.4; }}
+
+    /* ── AI Shared Identity (matches AI Insights palette) ── */
+
+    /* AI Score pills */
+    .conf-pill {{ display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;white-space:nowrap;letter-spacing:0.01em;cursor:default;position:relative;overflow:hidden;transition:transform 0.15s ease,box-shadow 0.15s ease; }}
+    .conf-pill:hover {{ transform:translateY(-1px); }}
+    .conf-pill::after {{ content:"";position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06),transparent);animation:conf-shimmer 4s ease-in-out infinite; }}
+    @keyframes conf-shimmer {{ 0%{{left:-100%}} 40%{{left:150%}} 100%{{left:150%}} }}
+    .conf-icon {{ font-size:0.6rem;opacity:0.85; }}
+    .conf-high {{ background:rgba(16,185,129,0.12);color:#6EE7B7;border:1px solid rgba(16,185,129,0.25); }}
+    .conf-high:hover {{ box-shadow:0 2px 8px rgba(16,185,129,0.18); }}
+    .conf-medium {{ background:rgba(245,158,11,0.10);color:#F59E0B;border:1px solid rgba(245,158,11,0.22); }}
+    .conf-medium:hover {{ box-shadow:0 2px 8px rgba(245,158,11,0.14); }}
+    .conf-low {{ background:rgba(248,113,113,0.10);color:#FCA5A5;border:1px solid rgba(248,113,113,0.22); }}
+    .conf-low:hover {{ box-shadow:0 2px 8px rgba(248,113,113,0.14); }}
+
+    /* AI Recommendation banner — matches AI Insights headline card */
+    .conf-banner {{ position:relative;padding:0.85rem 1.1rem 0.65rem;background:linear-gradient(135deg,#1a1425,#151020);border:1.5px solid #3D2E5C;border-radius:12px;margin:0.1rem 0 0.25rem 0;overflow:hidden;box-shadow:0 2px 12px rgba(169,39,178,0.08); }}
+    .conf-banner::before {{ content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#A927B2,#F59E0B,#A927B2); }}
+    .conf-banner-top {{ display:flex;align-items:center;gap:0.4rem;margin-bottom:0.45rem; }}
+    .conf-banner-ai {{ font-size:0.65rem;font-weight:700;color:#F59E0B;text-transform:uppercase;letter-spacing:0.1em; }}
+    .conf-banner-sparkle {{ line-height:1;display:flex;align-items:center; }}
+    .conf-banner-sub {{ font-size:0.65rem;color:#64748B;margin-left:auto; }}
+    .conf-banner-counts {{ display:flex;gap:0.5rem;align-items:stretch; }}
+    .conf-banner-item {{ flex:1;display:flex;flex-direction:column;align-items:center;gap:0.15rem;background:rgba(255,255,255,0.025);padding:0.35rem 0.5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.04);transition:border-color 0.15s ease,background 0.15s ease; }}
+    .conf-banner-item:hover {{ border-color:rgba(255,255,255,0.08);background:rgba(255,255,255,0.04); }}
+    .conf-banner-ct {{ font-size:1.05rem;font-weight:800;line-height:1; }}
+    .conf-banner-label {{ font-size:0.6rem;font-weight:600;letter-spacing:0.03em;opacity:0.85; }}
+
+    /* AI Score column — visually distinct cell */
+    .ai-col {{ background:linear-gradient(135deg,#1f1528,#1a1225);border:1px solid rgba(169,39,178,0.25);border-radius:6px;padding:5px 8px;margin:-11px -8px 0;min-height:34px;display:flex;align-items:center;justify-content:center;width:calc(100% + 16px); }}
+    .ai-col-hdr {{ background:linear-gradient(135deg,#251830,#1f1428);border:1px solid rgba(169,39,178,0.3);border-radius:6px;padding:0 8px;margin:-11px -8px 0;min-height:20px;display:flex;align-items:center;justify-content:center;width:calc(100% + 16px); }}
+    .ai-score-hdr {{ display:inline-flex;align-items:center;gap:4px; }}
+    .ai-score-hdr-label {{ font-size:0.7rem;font-weight:700;color:#F59E0B;text-transform:uppercase;letter-spacing:0.06em; }}
 
     /* Org header card (above expander) */
     .org-card {{ background: #111827; border: 1.5px solid #2A3548; border-radius: 12px 12px 0 0; padding: 0.9rem 1.15rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: -1rem; }}
@@ -721,7 +958,7 @@ def show_header(user):
 
 def show_nav():
     active = st.session_state.page
-    c1, c2, c3, c4 = st.columns([2, 2, 1.5, 1])
+    c1, c2, c3, c4, c5 = st.columns([2, 2, 1.5, 1.5, 1])
     with c1:
         if st.button("Scan Overview", use_container_width=True, type="primary" if active == "overview" else "secondary"):
             st.session_state.page = "overview"
@@ -735,6 +972,10 @@ def show_nav():
             st.session_state.page = "audit"
             st.rerun()
     with c4:
+        if st.button("AI Insights", use_container_width=True, type="primary" if active == "insights" else "secondary"):
+            st.session_state.page = "insights"
+            st.rerun()
+    with c5:
         if st.button("Sign out", use_container_width=True, key="signout_btn"):
             auth.logout()
             st.rerun()
@@ -832,6 +1073,220 @@ def render_compact_health_strip():
 
 
 # ------------------------------------------------------------------
+# AI Insights
+# ------------------------------------------------------------------
+def _ai_icon(size=16, _color=None):
+    """AI sparkle icon — three 4-pointed stars with cyan-to-purple gradient."""
+    return (
+        f'<svg width="{size}" height="{size}" viewBox="0 0 120 120" fill="none" '
+        f'style="display:inline-block;vertical-align:middle;">'
+        f'<defs>'
+        f'<linearGradient id="ai_g1" x1="0" y1="1" x2="1" y2="0">'
+        f'<stop offset="0%" stop-color="#00C9DB"/>'
+        f'<stop offset="100%" stop-color="#5B6CF7"/>'
+        f'</linearGradient>'
+        f'<linearGradient id="ai_g2" x1="0" y1="1" x2="1" y2="0">'
+        f'<stop offset="0%" stop-color="#5B6CF7"/>'
+        f'<stop offset="100%" stop-color="#8B5CF6"/>'
+        f'</linearGradient>'
+        f'</defs>'
+        f'<path d="M42 8C42 8 52 38 52 50C52 62 42 92 42 92C42 92 32 62 32 50C32 38 42 8 42 8Z'
+        f'M42 8C42 8 12 28 0 38C0 38 12 48 42 8Z'
+        f'" fill="url(#ai_g1)" opacity="0"/>'
+        f'<path d="M45 10 C48 30, 62 48, 80 52 C62 56, 48 70, 45 92 C42 70, 28 56, 8 52 C28 48, 42 30, 45 10Z" fill="url(#ai_g1)"/>'
+        f'<path d="M80 2 C82 14, 90 22, 102 25 C90 28, 82 36, 80 50 C78 36, 70 28, 58 25 C70 22, 78 14, 80 2Z" fill="url(#ai_g2)"/>'
+        f'<path d="M85 72 C86 80, 90 84, 98 86 C90 88, 86 92, 85 100 C84 92, 80 88, 72 86 C80 84, 84 80, 85 72Z" fill="#7C3AED"/>'
+        f'</svg>'
+    )
+
+def _ai_sparkle(size=16, color="#F59E0B"):
+    """Single sparkle for minor decorative use."""
+    return _ai_icon(size)
+
+def _platform_logo(text: str, size: int = 18) -> str:
+    """Return an inline SVG logo based on platform name detected in text."""
+    t = text.lower()
+    if "pagerduty" in t or "pager" in t:
+        return f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" style="display:inline-block;vertical-align:middle;"><path d="M16.965 1.18C15.085.164 13.769 0 10.683 0H3.73v14.55h6.926c2.743 0 4.8-.164 6.678-1.394 1.989-1.31 3.14-3.487 3.14-5.99-.001-2.72-1.37-4.95-3.509-5.986zM11.32 10.578H8.186V3.857h2.987c2.825 0 4.42 1.068 4.42 3.244 0 2.393-1.595 3.477-4.273 3.477zM3.73 17.96h4.457V24H3.73z" fill="#06AC38"/></svg>'
+    elif "atlassian" in t or "jira" in t or "confluence" in t:
+        return f'<svg width="{size}" height="{size}" viewBox="0 0 256 256" style="display:inline-block;vertical-align:middle;"><defs><linearGradient id="atl1" x1="99%" y1="35%" x2="46%" y2="60%"><stop offset="0%" stop-color="#0052CC"/><stop offset="100%" stop-color="#2684FF"/></linearGradient></defs><path d="M103.5 152.2c-3.9-4-10.1-3.7-13.6.7L34.6 229.6c3.3 5.1 9 8.4 15.4 8.4h78.9c6 0 11.5-3.5 14-9-14.3-28.8-30-59.7-39.4-76.8z" fill="url(#atl1)"/><path d="M122.4 27.4c-27 47.5-36 72.5-14.2 108.5l50.7 92.3c3.3 5 9 8 15.2 8H253c6.4 0 12-3.4 15.4-8.4L134.1 27.5c-3.2-5.5-8.5-5.6-11.7-.1z" fill="#2684FF"/></svg>'
+    elif "gitlab" in t:
+        return f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" style="display:inline-block;vertical-align:middle;"><path d="M23.955 13.587l-1.342-4.135-2.664-8.189a.455.455 0 00-.867 0L16.418 9.45H7.582L4.918 1.263a.455.455 0 00-.867 0L1.386 9.452.044 13.587a.924.924 0 00.331 1.023L12 23.054l11.625-8.443a.92.92 0 00.33-1.024z" fill="#E24329"/><path d="M12 23.054L16.418 9.45H7.582L12 23.054z" fill="#FC6D26"/><path d="M12 23.054l-4.418-13.6H1.386L12 23.054z" fill="#FCA326"/><path d="M1.386 9.452L.044 13.587a.924.924 0 00.331 1.023L12 23.054 1.386 9.452z" fill="#E24329"/><path d="M12 23.054l4.418-13.6h6.196L12 23.054z" fill="#FCA326"/><path d="M22.614 9.452l1.341 4.135a.924.924 0 01-.33 1.023L12 23.054l10.614-13.602z" fill="#E24329"/></svg>'
+    return ""
+
+def show_insights():
+    sparkle = _ai_sparkle()
+    ai_icon = _ai_icon
+
+    # -- Page header (same bg as other tabs, with gradient accent) --
+    st.markdown(f"""<div class="phdr" style="position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#A927B2,#F59E0B,#F97316,#F59E0B,#A927B2);"></div>
+        <div style="position:absolute;top:-40px;right:-20px;width:180px;height:180px;background:radial-gradient(circle,rgba(245,158,11,0.08) 0%,transparent 70%);pointer-events:none;"></div>
+        <div style="position:absolute;bottom:-40px;left:-20px;width:150px;height:150px;background:radial-gradient(circle,rgba(169,39,178,0.06) 0%,transparent 70%);pointer-events:none;"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.5rem;">
+            {_ai_icon(18, '#F59E0B')}
+            <span style="font-size:0.68rem;font-weight:700;color:#F59E0B;text-transform:uppercase;letter-spacing:0.12em;">AI-Powered Analysis</span>
+        </div>
+        <div style="font-size:1.5rem;font-weight:800;color:#F1F5F9;letter-spacing:-0.02em;margin-bottom:0.35rem;">Executive Summary</div>
+        <div style="font-size:0.82rem;color:#94A3B8;line-height:1.5;">Intelligent analysis of your scan data to surface what matters most.</div>
+    </div>""", unsafe_allow_html=True)
+
+    # Load scan data
+    scan_data = load_scan_results()
+    if not scan_data:
+        st.markdown('<div class="empty"><div style="font-size:1.1rem;font-weight:600;color:var(--t2);margin-bottom:0.4rem;">No Scan Data</div><div style="color:var(--t3);font-size:0.85rem;">Run a scan first to generate AI insights.</div></div>', unsafe_allow_html=True)
+        return
+
+    # -- Scan context bar --
+    run_date = scan_data.get("run_date", "")
+    try:
+        dt = datetime.fromisoformat(run_date)
+        date_str = dt.strftime("%b %d, %Y at %I:%M %p")
+    except (ValueError, TypeError):
+        date_str = run_date or "Unknown"
+
+    st.markdown(f"""<div style="background:#111827;border:1.5px solid #2A3548;border-radius:10px;padding:0.75rem 1.1rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+        <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:8px;height:8px;border-radius:50%;background:#10B981;box-shadow:0 0 6px rgba(16,185,129,0.5);"></div>
+            <span style="font-size:0.75rem;color:#94A3B8;">Scan from <strong style="color:#F1F5F9;">{date_str}</strong></span>
+        </div>
+        <div style="display:flex;gap:1.25rem;">
+            <span style="font-size:0.78rem;color:#F59E0B;font-weight:600;">{scan_data.get('total_inactive_users', 0)} inactive</span>
+            <span style="font-size:0.78rem;color:#10B981;font-weight:600;">${scan_data.get('total_monthly_savings', 0):,.0f}/mo savings</span>
+            <span style="font-size:0.78rem;color:#A927B2;font-weight:600;">{scan_data.get('total_platforms_scanned', 0)} platforms</span>
+        </div>
+    </div>""", unsafe_allow_html=True)
+
+    # -- Generate button --
+    generate = st.button("Generate AI Analysis", use_container_width=False, type="primary", key="btn_ai_gen")
+
+    # Check cache or generate
+    result = None
+    if generate:
+        with st.spinner("Claude is analyzing your scan data..."):
+            result = ai_summary.generate_summary(force=True)
+    else:
+        result = ai_summary.generate_summary(force=False)
+
+    if result and "error" in result:
+        st.markdown(f"""<div style="background:rgba(239,68,68,0.08);border:1.5px solid rgba(239,68,68,0.2);border-radius:10px;padding:1rem 1.25rem;margin-top:0.75rem;">
+            <div style="color:#EF4444;font-weight:600;font-size:0.85rem;">Error</div>
+            <div style="color:#F1F5F9;font-size:0.82rem;margin-top:0.3rem;">{result['error']}</div>
+        </div>""", unsafe_allow_html=True)
+        return
+
+    if result and "summary" in result:
+        s = result["summary"]
+        generated_at = result.get("generated_at", "")
+        try:
+            gen_dt = datetime.fromisoformat(generated_at)
+            gen_str = gen_dt.strftime("%b %d, %Y at %I:%M %p")
+        except (ValueError, TypeError):
+            gen_str = generated_at
+
+        # -- Headline card --
+        headline = s.get("headline", "")
+        if headline:
+            st.markdown(f"""<div style="background:linear-gradient(135deg,#1a1425,#151020);border:1.5px solid #3D2E5C;border-radius:12px;padding:1.5rem 1.75rem;margin-top:0.75rem;position:relative;overflow:hidden;box-shadow:0 2px 16px rgba(169,39,178,0.1);">
+                <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#A927B2,#F59E0B,#A927B2);"></div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.6rem;">
+                    {_ai_icon(14, '#F59E0B')}
+                    <span style="font-size:0.65rem;font-weight:700;color:#F59E0B;text-transform:uppercase;letter-spacing:0.1em;">AI Headline</span>
+                    <span style="margin-left:auto;font-size:0.65rem;color:#64748B;">Generated {gen_str}</span>
+                </div>
+                <div style="font-size:1.1rem;font-weight:600;color:#F1F5F9;line-height:1.5;">{headline}</div>
+            </div>""", unsafe_allow_html=True)
+
+        st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
+
+        # -- Three-column cards: Findings, Opportunities, Actions --
+        col1, col2, col3 = st.columns(3)
+
+        # Findings
+        findings = s.get("findings", [])
+        findings_html = "".join(
+            f'<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:0.65rem;">'
+            f'<div style="min-width:6px;width:6px;height:6px;border-radius:50%;background:#3B82F6;margin-top:6px;box-shadow:0 0 4px rgba(59,130,246,0.4);"></div>'
+            f'<div style="font-size:0.8rem;color:#CBD5E1;line-height:1.5;">{f}</div></div>'
+            for f in findings
+        )
+        with col1:
+            st.markdown(f"""<div style="background:#111827;border:1.5px solid #1E293B;border-radius:12px;padding:1.25rem;height:100%;position:relative;overflow:hidden;">
+                <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#3B82F6,transparent);"></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:1rem;">
+                    <div style="width:28px;height:28px;border-radius:8px;background:rgba(59,130,246,0.12);display:flex;align-items:center;justify-content:center;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-11v6h2v-6h-2zm0-4v2h2V7h-2z" fill="#3B82F6"/></svg>
+                    </div>
+                    <span style="font-size:0.72rem;font-weight:700;color:#3B82F6;text-transform:uppercase;letter-spacing:0.08em;">Key Findings</span>
+                </div>
+                {findings_html}
+            </div>""", unsafe_allow_html=True)
+
+        # Opportunities
+        opportunities = s.get("opportunities", [])
+        opps_html = ""
+        for opp in opportunities:
+            area = opp.get('area', '')
+            logo = _platform_logo(area)
+            opps_html += f"""<div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:8px;padding:0.7rem 0.85rem;margin-bottom:0.5rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem;">
+                    <span style="display:flex;align-items:center;gap:6px;font-size:0.78rem;font-weight:600;color:#10B981;">{logo}{area}</span>
+                    <span style="font-size:0.75rem;font-weight:700;color:#F59E0B;background:rgba(245,158,11,0.1);padding:2px 8px;border-radius:4px;">{opp.get('savings', '')}</span>
+                </div>
+                <div style="font-size:0.76rem;color:#94A3B8;line-height:1.45;">{opp.get('detail', '')}</div>
+            </div>"""
+        with col2:
+            st.markdown(f"""<div style="background:#111827;border:1.5px solid #1E293B;border-radius:12px;padding:1.25rem;height:100%;position:relative;overflow:hidden;">
+                <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#10B981,transparent);"></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:1rem;">
+                    <div style="width:28px;height:28px;border-radius:8px;background:rgba(16,185,129,0.12);display:flex;align-items:center;justify-content:center;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 8V4l8 8-8 8v-4H4V8h8z" fill="#10B981"/></svg>
+                    </div>
+                    <span style="font-size:0.72rem;font-weight:700;color:#10B981;text-transform:uppercase;letter-spacing:0.08em;">Opportunities</span>
+                </div>
+                {opps_html}
+            </div>""", unsafe_allow_html=True)
+
+        # Actions
+        actions = s.get("actions", [])
+        actions_html = ""
+        for i, a in enumerate(actions, 1):
+            actions_html += f"""<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:0.65rem;">
+                <div style="min-width:22px;height:22px;border-radius:6px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#F59E0B;">{i}</div>
+                <div style="font-size:0.8rem;color:#CBD5E1;line-height:1.5;">{a}</div>
+            </div>"""
+        with col3:
+            st.markdown(f"""<div style="background:#111827;border:1.5px solid #1E293B;border-radius:12px;padding:1.25rem;height:100%;position:relative;overflow:hidden;">
+                <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#F59E0B,transparent);"></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:1rem;">
+                    <div style="width:28px;height:28px;border-radius:8px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M13 3v2h3.59L7.76 13.83l1.41 1.41L18 6.41V10h2V3h-7z" fill="#F59E0B"/><path d="M18 18H6V6h5V4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5h-2v5z" fill="#F59E0B"/></svg>
+                    </div>
+                    <span style="font-size:0.72rem;font-weight:700;color:#F59E0B;text-transform:uppercase;letter-spacing:0.08em;">Recommended Actions</span>
+                </div>
+                {actions_html}
+            </div>""", unsafe_allow_html=True)
+
+        # -- Bottom line --
+        bottom_line = s.get("bottom_line", "")
+        if bottom_line:
+            st.markdown(f"""<div style="background:linear-gradient(135deg,rgba(16,185,129,0.06),rgba(245,158,11,0.06));border:1.5px solid rgba(16,185,129,0.2);border-radius:10px;padding:1rem 1.25rem;margin-top:0.75rem;display:flex;align-items:center;gap:10px;">
+                <div style="min-width:32px;height:32px;border-radius:50%;background:rgba(16,185,129,0.12);display:flex;align-items:center;justify-content:center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.09 8.26L20 9.27L15.55 13.97L16.91 20L12 16.9L7.09 20L8.45 13.97L4 9.27L9.91 8.26L12 2Z" fill="#10B981"/></svg>
+                </div>
+                <div style="font-size:0.88rem;color:#F1F5F9;font-weight:500;line-height:1.5;">{bottom_line}</div>
+            </div>""", unsafe_allow_html=True)
+
+    else:
+        # No summary yet — show empty state
+        st.markdown(f"""<div style="text-align:center;padding:3rem 2rem;background:#111827;border:1.5px dashed #2A3548;border-radius:14px;margin-top:0.75rem;">
+            <div style="margin-bottom:0.75rem;">{_ai_icon(40, '#F59E0B')}</div>
+            <div style="font-size:1.1rem;font-weight:600;color:#F1F5F9;margin-bottom:0.4rem;">No Summary Generated Yet</div>
+            <div style="color:#64748B;font-size:0.85rem;max-width:400px;margin:0 auto;">Click <strong style="color:#F59E0B;">Generate AI Analysis</strong> above to create an intelligent analysis of your scan results.</div>
+        </div>""", unsafe_allow_html=True)
+
+
+# ------------------------------------------------------------------
 # Dashboard
 # ------------------------------------------------------------------
 def show_dashboard():
@@ -844,6 +1299,8 @@ def show_dashboard():
         show_scan_overview()
     elif st.session_state.page == "tokens":
         show_tokens(user)
+    elif st.session_state.page == "insights":
+        show_insights()
     else:
         show_audit()
 
@@ -1291,7 +1748,11 @@ def show_scan_overview():
                 for u in p.get("users", []):
                     akey = action_key(org_name, p_name, u.get("email", ""))
                     u_status = get_status(actions, akey)
-                    all_users.append((u, p_name, u_status, akey))
+                    u_conf = confidence_score(u.get("inactivity_type", ""), u.get("last_active", ""))
+                    all_users.append((u, p_name, u_status, akey, u_conf))
+
+            # Sort by confidence (highest first)
+            all_users.sort(key=lambda x: (CONFIDENCE_SORT_ORDER.get(x[4]["level"], 1), -x[4]["score"]))
 
             if not all_users:
                 st.markdown('<div style="color:#64748B;font-size:0.85rem;padding:0.5rem 0;">No inactive users found.</div>', unsafe_allow_html=True)
@@ -1322,7 +1783,7 @@ def show_scan_overview():
                 plat_filter = st.session_state.get(f"pf_{org_key}", "All")
                 search_q = search_query.strip().lower() if search_query else ""
                 filtered = []
-                for u, p_name, u_status, akey in all_users:
+                for u, p_name, u_status, akey, u_conf in all_users:
                     if plat_filter != "All" and p_name != plat_filter:
                         continue
                     if status_filter != "All Statuses" and u_status != status_filter.lower():
@@ -1332,25 +1793,57 @@ def show_scan_overview():
                         u_email_l = u.get("email", "").lower()
                         if search_q not in u_name_l and search_q not in u_email_l:
                             continue
-                    filtered.append((u, p_name, u_status, akey))
+                    filtered.append((u, p_name, u_status, akey, u_conf))
 
                 if not filtered:
                     st.markdown('<div style="text-align:center;padding:1.5rem;color:#64748B;font-size:0.85rem;">No users match filters.</div>', unsafe_allow_html=True)
                 else:
+                    # ── Confidence summary banner ──────────────────
+                    conf_high_ct = sum(1 for *_, c in filtered if c["level"] == "high")
+                    conf_med_ct = sum(1 for *_, c in filtered if c["level"] == "medium")
+                    conf_low_ct = sum(1 for *_, c in filtered if c["level"] == "low")
+                    ai_ico = _ai_icon(14, '#F59E0B')
+                    st.markdown(f'''<div class="conf-banner">
+                        <div class="conf-banner-top">
+                            <span class="conf-banner-sparkle">{ai_ico}</span>
+                            <span class="conf-banner-ai">AI Recommendation</span>
+                            <span class="conf-banner-sub">Login activity &middot; Inactivity duration &middot; Escalation policy</span>
+                        </div>
+                        <div class="conf-banner-counts">
+                            <div class="conf-banner-item">
+                                <span class="conf-banner-ct" style="color:#6EE7B7;">{conf_high_ct}</span>
+                                <span class="conf-banner-label" style="color:#6EE7B7;">Safe to deactivate</span>
+                            </div>
+                            <div class="conf-banner-item">
+                                <span class="conf-banner-ct" style="color:#F59E0B;">{conf_med_ct}</span>
+                                <span class="conf-banner-label" style="color:#F59E0B;">Review recommended</span>
+                            </div>
+                            <div class="conf-banner-item">
+                                <span class="conf-banner-ct" style="color:#FCA5A5;">{conf_low_ct}</span>
+                                <span class="conf-banner-label" style="color:#FCA5A5;">Needs investigation</span>
+                            </div>
+                        </div>
+                    </div>''', unsafe_allow_html=True)
+
+                    st.markdown('<div style="height:0.3rem;"></div>', unsafe_allow_html=True)
+
                     # ── Interactive table with widgets per row ────
-                    pending_count = sum(1 for u, p, s, k in filtered if s == "pending")
+                    pending_count = sum(1 for u, p, s, k, c in filtered if s == "pending")
                     ROWS_PER_PAGE = 15
 
                     # Column proportions - shared by header + rows
-                    COL_W = [0.3, 1.1, 1.5, 2.4, 1.4, 0.6, 1.3, 0.7]
+                    COL_W = [0.25, 1.0, 1.4, 2.1, 1.2, 0.55, 0.9, 1.2, 0.7]
 
                     # ── Table header (st.columns - matches row layout) ─
-                    hdr_labels = ["", "Platform", "Name", "Email", "Last Active", "Cost", "Status", "Notification"]
+                    hdr_labels = ["", "Platform", "Name", "Email", "Last Active", "Cost", None, "Status", "Action"]
                     hdr_style = 'font-size:0.7rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.06em;padding:0;margin-top:-11px;'
                     hdr_cols = st.columns(COL_W)
                     for i, lbl in enumerate(hdr_labels):
                         with hdr_cols[i]:
-                            st.markdown(f'<div style="{hdr_style}">{lbl}</div>', unsafe_allow_html=True)
+                            if lbl is None:
+                                st.markdown(f'<div class="ai-col-hdr"><span class="ai-score-hdr">{_ai_icon(11)} <span class="ai-score-hdr-label">AI Score</span></span></div>', unsafe_allow_html=True)
+                            else:
+                                st.markdown(f'<div style="{hdr_style}">{lbl}</div>', unsafe_allow_html=True)
                     st.markdown('<div style="border-bottom:2px solid #2A3548;margin:-0.4rem 0 0.15rem 0;"></div>', unsafe_allow_html=True)
 
                     # ── Select-all + pagination controls ─────────
@@ -1363,7 +1856,7 @@ def show_scan_overview():
                     page_end = min(page_start + ROWS_PER_PAGE, len(filtered))
                     page_slice = filtered[page_start:page_end]
 
-                    sa_col, info_col, pg_col = st.columns([0.3, 5, 4])
+                    sa_col, info_col, pg_col = st.columns([0.25, 5, 4])
                     with sa_col:
                         select_all = st.checkbox("All", key=f"sa_{org_key}", label_visibility="collapsed")
                     with info_col:
@@ -1387,7 +1880,7 @@ def show_scan_overview():
                     status_options = ["Pending", "Deactivated", "Kept"]
                     changed_keys = []
 
-                    for row_i, (u, p_name, u_status, akey) in enumerate(page_slice):
+                    for row_i, (u, p_name, u_status, akey, u_conf) in enumerate(page_slice):
                         global_i = page_start + row_i
                         u_name = u.get("name", "Unknown")
                         u_email = u.get("email", "")
@@ -1434,13 +1927,16 @@ def show_scan_overview():
                             st.markdown(f'<div class="tcell tcell-cost {dim_cls}">{cost_label}</div>', unsafe_allow_html=True)
 
                         with rc[6]:
+                            st.markdown(f'<div class="ai-col {dim_cls}">{confidence_pill_html(u_conf)}</div>', unsafe_allow_html=True)
+
+                        with rc[7]:
                             current_idx = status_options.index(u_status.capitalize()) if u_status.capitalize() in status_options else 0
                             new_val = st.selectbox("s", status_options, index=current_idx, key=f"rs_{org_key}_{global_i}", label_visibility="collapsed")
                             if new_val.lower() != u_status:
                                 changed_keys.append((akey, new_val.lower(), u.get("cost", 0)))
 
-                        with rc[7]:
-                            if st.button("Notification", key=f"snd_{org_key}_{global_i}", use_container_width=True):
+                        with rc[8]:
+                            if st.button("Notify", key=f"snd_{org_key}_{global_i}", use_container_width=True):
                                 st.toast(f"Notification sent to {u_name} asking about {p_name} access")
 
                         # Row divider
@@ -1484,7 +1980,7 @@ def show_scan_overview():
                         with ba2:
                             if st.button("Apply", key=f"bapply_{org_key}", use_container_width=True, type="primary"):
                                 for idx in selected_indices:
-                                    u, p_name, u_status, akey = filtered[idx]
+                                    u, p_name, u_status, akey, _conf = filtered[idx]
                                     actions[akey] = {
                                         "status": bulk_status.lower(),
                                         "reason": "Bulk action",
@@ -1504,7 +2000,7 @@ def show_scan_overview():
                             notify_clicked = st.button(f"Notify ({selected_count})", key=f"bnotify_{org_key}", use_container_width=True)
                         if notify_clicked:
                             for idx in selected_indices:
-                                u, p_name, u_status, akey = filtered[idx]
+                                u, p_name, u_status, akey, _conf = filtered[idx]
                                 st.toast(f"Teams notification sent to {u.get('name', '?')} ({p_name})")
                             try:
                                 log_event("console", "teams_notification_sent", auth.get_current_user().get("email", ""), {
@@ -2051,10 +2547,13 @@ def show_audit():
 # Login - polished card (container styled by CONTAINER_CSS above)
 # ------------------------------------------------------------------
 def show_login_screen_with_dev():
-    """Login page. Shows Microsoft SSO when Azure AD is configured, plus dev mode fallback."""
-    logo = f'<img src="data:image/png;base64,{LOGO_WHITE}" alt="Xolv" style="height:58px;" />' if LOGO_WHITE else '<span style="font-size:1.6rem;font-weight:800;color:#F1F5F9;letter-spacing:0.05em;">XOLV</span>'
+    """Login page — centered card layout."""
+    logo = f'<img src="data:image/png;base64,{LOGO_WHITE}" alt="Xolv" style="height:46px;" />' if LOGO_WHITE else '<span style="font-size:1.5rem;font-weight:800;color:#F1F5F9;letter-spacing:0.05em;">XOLV</span>'
 
-    # Check if Azure AD is properly configured (not empty, not placeholders)
+    # AI sparkle — simple inline SVG (no <defs> to avoid Streamlit parse issues)
+    ai_star = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:middle;"><path d="M12 2L14 9L21 9L15.5 13.5L17.5 21L12 16.5L6.5 21L8.5 13.5L3 9L10 9Z" fill="url(#aig)"/><defs><linearGradient id="aig" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00C9DB"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient></defs></svg>'
+
+    # Check if Azure AD is properly configured
     azure_configured = bool(
         config.AZURE_CLIENT_ID and config.AZURE_TENANT_ID and config.AZURE_CLIENT_SECRET
         and "your" not in config.AZURE_TENANT_ID.lower()
@@ -2062,7 +2561,7 @@ def show_login_screen_with_dev():
         and len(config.AZURE_CLIENT_ID) > 10
     )
 
-    # Handle OAuth callback (user returning from Microsoft login)
+    # Handle OAuth callback
     query_params = st.query_params
     if "code" in query_params and azure_configured:
         user = auth.complete_login(dict(query_params))
@@ -2079,73 +2578,81 @@ def show_login_screen_with_dev():
         login_url = "#"
         disabled_css = "opacity:0.45;pointer-events:none;"
 
-    st.markdown(f"""
-        <div style="
-            background: #1B2540;
-            border: 1.5px solid #4A6080;
-            border-radius: 16px;
-            padding: 3rem 2.5rem 2rem 2.5rem;
-            margin: 0 auto 0.75rem auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
-            position: relative;
-            overflow: hidden;
-            text-align: center;
-        ">
-            <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#028090,#A927B2,#F25239);"></div>
-            <div style="margin-bottom:2.25rem;">{logo}</div>
-            <div style="font-size:1.5rem;font-weight:700;color:#F1F5F9;margin-bottom:0.5rem;letter-spacing:-0.03em;line-height:1.2;">License Scanner Console</div>
-            <div style="font-size:0.86rem;color:#94A3B8;line-height:1.6;margin-bottom:2rem;">License optimization &amp; credential management for monitored platform integrations</div>
-            <div style="display:flex;justify-content:center;gap:1.5rem;margin-bottom:2rem;">
-                <div style="display:flex;align-items:center;gap:6px;">
-                    <span style="width:6px;height:6px;border-radius:50%;background:#10B981;box-shadow:0 0 0 2px rgba(16,185,129,0.2);"></span>
-                    <span style="font-size:0.74rem;color:#64748B;">Scan Overview</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:6px;">
-                    <span style="width:6px;height:6px;border-radius:50%;background:#028090;box-shadow:0 0 0 2px rgba(2,128,144,0.2);"></span>
-                    <span style="font-size:0.74rem;color:#64748B;">Token Health</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:6px;">
-                    <span style="width:6px;height:6px;border-radius:50%;background:#A927B2;box-shadow:0 0 0 2px rgba(169,39,178,0.2);"></span>
-                    <span style="font-size:0.74rem;color:#64748B;">Audit Log</span>
-                </div>
-            </div>
-            <div style="height:1px;background:linear-gradient(90deg,transparent,#4A6080,transparent);margin:0 0.5rem 1.75rem 0.5rem;"></div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
-                <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:100px;padding:3px 12px 3px 8px;font-size:0.6rem;font-weight:700;color:#F59E0B;text-transform:uppercase;letter-spacing:0.08em;">
-                    <span style="width:5px;height:5px;border-radius:50%;background:#F59E0B;box-shadow:0 0 0 2px rgba(245,158,11,0.15);"></span>
-                    Coming Soon
-                </span>
-                <a href="{login_url}" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;background:#FFFFFF;color:#1A1A1A;border:1.5px solid #D1D5DB;border-radius:8px;padding:0.75rem 2.5rem;font-family:Segoe UI,sans-serif;font-size:0.92rem;font-weight:600;text-decoration:none;box-shadow:0 1px 3px rgba(0,0,0,0.12);{disabled_css}">{ms_logo} Sign in with Microsoft</a>
-            </div>
-            <div style="display:flex;align-items:center;gap:0.75rem;margin:1.25rem 0 0 0;">
-                <div style="flex:1;height:1px;background:#3A5070;"></div>
-                <span style="font-size:0.68rem;color:#64748B;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">or</span>
-                <div style="flex:1;height:1px;background:#3A5070;"></div>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # ── Dev mode (Streamlit widgets below card) ───────────────────
-    if not azure_configured:
-        st.markdown("""<div style="text-align:left;">
-            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:0.7rem 1rem;">
-                <div style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#F59E0B;">Development Mode &mdash; Local Testing</div>
-            </div>
-        </div>""", unsafe_allow_html=True)
-        st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
-        dev_email = st.text_input("Email", value="dev@yourcompany.com", label_visibility="collapsed")
-        st.markdown("<div style='height:0.15rem'></div>", unsafe_allow_html=True)
-        if st.button("Sign in as dev user", use_container_width=True, type="primary"):
-            st.session_state["user"] = {"name": "Dev User", "email": dev_email, "groups": []}
+    # Handle access code login via query param (set by JS in card)
+    if "access_code" in query_params:
+        code_val = query_params["access_code"]
+        if code_val:
+            st.session_state["user"] = {"name": "User", "email": "user@company.com", "groups": []}
+            st.query_params.clear()
             st.rerun()
-    else:
-        with st.expander("Developer access", expanded=False):
-            dev_email = st.text_input("Email", value="dev@yourcompany.com", label_visibility="collapsed")
-            if st.button("Sign in as dev user", use_container_width=True):
-                st.session_state["user"] = {"name": "Dev User", "email": dev_email, "groups": []}
-                st.rerun()
 
-    st.markdown('<div style="text-align:center;margin-top:1.25rem;font-size:0.68rem;color:#475569;">Protected by Xolv Technology Solutions</div>', unsafe_allow_html=True)
+    # Use st.columns to center content (CSS can't override layout="wide" inline styles)
+    _left, center, _right = st.columns([1, 1.2, 1])
+
+    with center:
+        # ── Single card: everything inside one HTML block ─────────
+        st.markdown(f"""
+            <div class="lcard">
+            <div class="lcard-bar"></div>
+            <div class="lcard-logo">{logo}</div>
+            <div class="lcard-title">License Scanner <span>Console</span></div>
+            <div class="lcard-sub">Manage licenses, rotate credentials, and optimize SaaS spend.</div>
+            <div class="lcard-pills">
+                <div class="lcard-pill">
+                    <span class="lcard-pill-dot" style="background:#10B981;"></span>
+                    <span class="lcard-pill-text">Scan &amp; Detect</span>
+                </div>
+                <div class="lcard-pill">
+                    <span class="lcard-pill-dot" style="background:#028090;"></span>
+                    <span class="lcard-pill-text">Token Health</span>
+                </div>
+                <div class="lcard-pill lcard-pill-ai">
+                    {ai_star}
+                    <span class="lcard-pill-text">AI Insights</span>
+                </div>
+                <div class="lcard-pill">
+                    <span class="lcard-pill-dot" style="background:#F59E0B;"></span>
+                    <span class="lcard-pill-text">Audit Trail</span>
+                </div>
+            </div>
+            <div class="lcard-div"></div>
+
+            <input type="password" class="lcard-input" id="accessCode"
+                   placeholder="Enter your access code" autocomplete="off" />
+            <button class="lcard-btn" onclick="submitAccessCode()">Sign in</button>
+            <div id="accessError" class="lcard-error" style="display:none;">Please enter an access code.</div>
+
+            <div class="lcard-or">
+                <div class="lcard-or-line"></div>
+                <span class="lcard-or-text">or</span>
+                <div class="lcard-or-line"></div>
+            </div>
+            <div style="text-align:center; margin-top:0.25rem;">
+                <a href="{login_url}" class="lcard-sso" style="{disabled_css}">
+                    {ms_logo} Sign in with Microsoft
+                </a>
+            </div>
+            </div>
+
+            <div class="lcard-footer">Protected by Xolv Technology Solutions</div>
+
+            <script>
+            function submitAccessCode() {{
+                var code = document.getElementById('accessCode').value;
+                if (!code) {{
+                    document.getElementById('accessError').style.display = 'block';
+                    return;
+                }}
+                document.getElementById('accessError').style.display = 'none';
+                var url = new URL(window.location);
+                url.searchParams.set('access_code', code);
+                window.location.href = url.toString();
+            }}
+            document.getElementById('accessCode').addEventListener('keydown', function(e) {{
+                if (e.key === 'Enter') submitAccessCode();
+            }});
+            </script>
+        """, unsafe_allow_html=True)
 
 
 # ------------------------------------------------------------------

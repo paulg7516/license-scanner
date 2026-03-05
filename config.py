@@ -17,6 +17,9 @@ AUTHORITY = f"https://login.microsoftonline.com/{AZURE_TENANT_ID}"
 # Encryption
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY", "")
 
+# AI (Claude API)
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+
 # Database
 DATABASE_PATH = os.getenv("DATABASE_PATH", "watchdog.db")
 
