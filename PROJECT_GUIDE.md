@@ -1,8 +1,8 @@
-# License Watchdog -Project Guide
+# License Scanner -Project Guide
 
 ## Overview
 
-License Watchdog is a self-service web portal for managing SaaS license optimization and API token rotation. It scans platforms like PagerDuty, Atlassian, and GitLab to identify inactive users, surface cost savings, and provide centralized credential management with a full audit trail.
+License Scanner is a self-service web portal for managing SaaS license optimization and API token rotation. It scans platforms like PagerDuty, Atlassian, and GitLab to identify inactive users, surface cost savings, and provide centralized credential management with a full audit trail.
 
 Built by Xolv Technology Solutions.
 
@@ -183,7 +183,7 @@ AI-generated executive summaries powered by Claude.
 ### Architecture
 
 ```
-license-watchdog-ui/
+license-scanner/
 ├── app.py              # Main Streamlit app -all UI logic (single-page app)
 ├── auth.py             # Azure AD OAuth2 via MSAL
 ├── config.py           # Environment config + SYSTEMS registry

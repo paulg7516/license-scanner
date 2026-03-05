@@ -1,4 +1,4 @@
-# 🔑 License Watchdog - Token Rotation Portal
+# 🔑 License Scanner - Token Rotation Portal
 
 A self-service web UI that lets system owners rotate their own API tokens — so you're not the bottleneck.
 
@@ -16,7 +16,7 @@ Built with **Streamlit** (Python), secured with **Azure AD** login and **AES enc
 ### 2. Install dependencies
 
 ```bash
-cd license-watchdog-ui
+cd license-scanner-ui
 pip install -r requirements.txt
 ```
 
@@ -48,7 +48,7 @@ The app opens at **http://localhost:8501**. Log in using the access code set in 
 
 1. Go to **Azure Portal → Azure Active Directory → App Registrations → New Registration**
 2. Set:
-   - Name: `License Watchdog`
+   - Name: `License Scanner`
    - Redirect URI: `http://localhost:8501` (add your production URL later)
    - Supported account types: Single tenant
 3. After creation, note the **Application (client) ID** and **Directory (tenant) ID**
@@ -96,21 +96,21 @@ That's it — the UI picks it up automatically.
 
 # Create an App Service
 az webapp up \
-  --name license-watchdog \
+  --name license-scanner \
   --resource-group your-rg \
   --runtime "PYTHON:3.11" \
   --sku B1
 
 # Set environment variables
 az webapp config appsettings set \
-  --name license-watchdog \
+  --name license-scanner \
   --resource-group your-rg \
   --settings \
     AZURE_CLIENT_ID="your-client-id" \
     AZURE_TENANT_ID="your-tenant-id" \
     AZURE_CLIENT_SECRET="your-secret" \
     ENCRYPTION_KEY="your-fernet-key" \
-    REDIRECT_URI="https://license-watchdog.azurewebsites.net"
+    REDIRECT_URI="https://license-scanner.azurewebsites.net"
 ```
 
 Create a `startup.txt` file:
@@ -123,7 +123,7 @@ Then set the startup command:
 
 ```bash
 az webapp config set \
-  --name license-watchdog \
+  --name license-scanner \
   --resource-group your-rg \
   --startup-file startup.txt
 ```
@@ -133,7 +133,7 @@ az webapp config set \
 ```bash
 # On your VM
 git clone <your-repo>
-cd license-watchdog-ui
+cd license-scanner-ui
 pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with production values
@@ -160,7 +160,7 @@ nohup streamlit run app.py --server.port 8501 --server.headless true &
 ## Project Structure
 
 ```
-license-watchdog-ui/
+license-scanner-ui/
 ├── app.py              # Main Streamlit UI
 ├── auth.py             # Azure AD authentication
 ├── storage.py          # Encrypted token storage + audit log
