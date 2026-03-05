@@ -2568,6 +2568,7 @@ def show_login_screen_with_dev():
             st.session_state["user"] = user
             st.query_params.clear()
             st.rerun()
+            st.stop()
 
     ms_logo = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 21 21"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>'
     if azure_configured:
@@ -2622,6 +2623,7 @@ def show_login_screen_with_dev():
             if access_code and config.ACCESS_CODE and access_code == config.ACCESS_CODE:
                 st.session_state["user"] = {"name": "User", "email": "user@company.com", "groups": []}
                 st.rerun()
+                st.stop()
             elif not access_code:
                 st.error("Please enter an access code.")
             else:
