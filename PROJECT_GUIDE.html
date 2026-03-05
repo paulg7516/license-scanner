@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>License Scanner -Project Guide</title>
+<style>
+  :root {
+    --bg: #0B0F19;
+    --bg-card: #111827;
+    --bg-card-hover: #1A2236;
+    --border: #1E293B;
+    --border2: #2A3548;
+    --t1: #F1F5F9;
+    --t2: #94A3B8;
+    --t3: #64748B;
+    --t4: #475569;
+    --teal: #028090;
+    --green: #10B981;
+    --orange: #F59E0B;
+    --purple: #A927B2;
+    --red: #EF4444;
+    --blue: #3B82F6;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--t2);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* Header */
+  .site-header {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border2);
+    padding: 1.25rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  }
+  .site-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--teal), var(--purple), var(--orange));
+  }
+  .header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-inner img { height: 36px; }
+  .header-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--t3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* Layout */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  /* TOC sidebar layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    .toc { display: none; }
+  }
+
+  /* TOC */
+  .toc {
+    position: sticky;
+    top: 90px;
+    background: var(--bg-card);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+  }
+  .toc-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--t4);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.75rem;
+  }
+  .toc a {
+    display: block;
+    color: var(--t3);
+    text-decoration: none;
+    font-size: 0.82rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+    transition: all 120ms ease;
+  }
+  .toc a:hover {
+    color: var(--t1);
+    background: rgba(2,128,144,0.1);
+  }
+  .toc a.sub {
+    padding-left: 1.2rem;
+    font-size: 0.78rem;
+    color: var(--t4);
+  }
+
+  /* Content */
+  .content h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--t1);
+    letter-spacing: -0.03em;
+    margin-bottom: 0.5rem;
+  }
+  .content .subtitle {
+    font-size: 0.95rem;
+    color: var(--t3);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+
+  .content h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--t1);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    scroll-margin-top: 80px;
+  }
+  .content h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--t1);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    scroll-margin-top: 80px;
+  }
+
+  .content p { margin-bottom: 1rem; }
+
+  .content strong { color: var(--t1); }
+
+  .content a {
+    color: var(--teal);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(2,128,144,0.3);
+  }
+  .content a:hover {
+    color: #03939F;
+    border-bottom-color: var(--teal);
+  }
+
+  /* Cards */
+  .card {
+    background: var(--bg-card);
+    border: 1.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .card.green::before { background: var(--green); }
+  .card.teal::before { background: var(--teal); }
+  .card.purple::before { background: var(--purple); }
+  .card.orange::before { background: linear-gradient(90deg, #A927B2, #F59E0B, #A927B2); }
+
+  .card-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.4rem;
+  }
+  .card-label.green { color: var(--green); }
+  .card-label.teal { color: var(--teal); }
+  .card-label.purple { color: var(--purple); }
+  .card-label.orange { color: var(--orange); }
+
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--t1);
+    margin-bottom: 0.35rem;
+  }
+  .card-desc { font-size: 0.85rem; color: var(--t3); }
+
+  /* Nav tabs preview */
+  .tabs-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .tab-pill {
+    padding: 0.5rem 1.2rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab-pill.green { background: var(--green); }
+  .tab-pill.teal { background: var(--teal); }
+  .tab-pill.purple { background: var(--purple); }
+  .tab-pill.orange { background: var(--orange); }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.25rem;
+    font-size: 0.85rem;
+  }
+  th {
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--t4);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border2);
+    background: var(--bg-card);
+  }
+  td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--t2);
+  }
+  tr:hover td { background: rgba(2,128,144,0.03); }
+
+  /* Status pills */
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+  .pill.green { background: rgba(16,185,129,0.1); color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
+  .pill.orange { background: rgba(245,158,11,0.1); color: var(--orange); border: 1px solid rgba(245,158,11,0.2); }
+  .pill.red { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+  .pill.teal { background: rgba(2,128,144,0.1); color: var(--teal); border: 1px solid rgba(2,128,144,0.2); }
+  .pill.purple { background: rgba(169,39,178,0.1); color: var(--purple); border: 1px solid rgba(169,39,178,0.2); }
+
+  /* Code blocks */
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.82rem;
+    background: rgba(2,128,144,0.08);
+    color: var(--teal);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  pre {
+    background: var(--bg-card);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+    margin-bottom: 1.25rem;
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: var(--t2);
+  }
+
+  /* Lists */
+  ul, ol {
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  li { margin-bottom: 0.35rem; }
+  li::marker { color: var(--t4); }
+
+  /* Ordered steps */
+  .steps {
+    list-style: none;
+    padding-left: 0;
+    counter-reset: step;
+  }
+  .steps li {
+    counter-increment: step;
+    padding-left: 2.5rem;
+    position: relative;
+    margin-bottom: 0.75rem;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(2,128,144,0.12);
+    color: var(--teal);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 24px;
+  }
+
+  /* Architecture tree */
+  .tree {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.8rem;
+    line-height: 1.8;
+    color: var(--t3);
+  }
+  .tree .file { color: var(--t2); }
+  .tree .comment { color: var(--t4); }
+
+  /* Divider */
+  hr {
+    border: none;
+    height: 1px;
+    background: var(--border);
+    margin: 2rem 0;
+  }
+
+  /* Data flow */
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 0.75rem;
+  }
+  .flow-num {
+    min-width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(2,128,144,0.12);
+    color: var(--teal);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Security list */
+  .check-list {
+    list-style: none;
+    padding-left: 0;
+  }
+  .check-list li {
+    padding-left: 1.75rem;
+    position: relative;
+    margin-bottom: 0.5rem;
+  }
+  .check-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 5px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(16,185,129,0.15);
+    border: 2px solid var(--green);
+  }
+
+  /* AI sparkle icon inline SVG */
+  .ai-icon {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    margin-right: 2px;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 0.72rem;
+    color: var(--t4);
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="site-header">
+  <div class="header-inner">
+    <img src="assets/logo_white.png" alt="Xolv Technology Solutions">
+    <span class="header-badge">Project Guide</span>
+  </div>
+</header>
+
+<div class="container">
+<div class="layout">
+
+<!-- TOC -->
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <a href="#overview">Overview</a>
+  <a href="#getting-started">Getting Started</a>
+  <a href="#local-setup" class="sub">Local Setup</a>
+  <a href="#env-vars" class="sub">Environment Variables</a>
+  <a href="#user-guide">User Guide</a>
+  <a href="#scan-overview" class="sub">Scan Overview</a>
+  <a href="#token-health" class="sub">Token Health & Rotation</a>
+  <a href="#audit-log" class="sub">Audit Log</a>
+  <a href="#ai-insights" class="sub">AI Insights</a>
+  <a href="#technical-reference">Technical Reference</a>
+  <a href="#architecture" class="sub">Architecture</a>
+  <a href="#data-flow" class="sub">Data Flow</a>
+  <a href="#security" class="sub">Security</a>
+  <a href="#deployment">Deployment</a>
+  <a href="#render" class="sub">Render.com</a>
+  <a href="#azure" class="sub">Azure App Service</a>
+  <a href="#adding-platforms">Adding New Platforms</a>
+</nav>
+
+<!-- Content -->
+<main class="content">
+
+<h1>License Scanner</h1>
+<p class="subtitle">A self-service web portal for managing SaaS license optimization and API token rotation. Scans platforms like PagerDuty, Atlassian, and GitLab to identify inactive users, surface cost savings, and provide centralized credential management with a full audit trail.</p>
+
+<!-- ============================================ -->
+<h2 id="getting-started">Getting Started</h2>
+
+<h3>Prerequisites</h3>
+<ul>
+  <li>Python 3.10+</li>
+  <li>An Anthropic API key (for AI Insights)</li>
+  <li>Azure AD App Registration (for production SSO -optional for local dev)</li>
+</ul>
+
+<h3 id="local-setup">Local Setup</h3>
+<pre><code># Clone the repo
+git clone https://github.com/paulg7516/license-scanner.git
+cd license-scanner
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your values (see Environment Variables below)
+
+# Run
+streamlit run app.py --server.port 8501 --server.headless true</code></pre>
+<p>Open <strong>http://localhost:8501</strong> and log in with Dev Mode (no Azure AD required locally).</p>
+
+<h3 id="env-vars">Environment Variables</h3>
+<table>
+  <thead><tr><th>Variable</th><th>Required</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>AZURE_CLIENT_ID</code></td><td><span class="pill teal">Production</span></td><td>Azure AD app client ID</td></tr>
+    <tr><td><code>AZURE_TENANT_ID</code></td><td><span class="pill teal">Production</span></td><td>Azure AD tenant ID</td></tr>
+    <tr><td><code>AZURE_CLIENT_SECRET</code></td><td><span class="pill teal">Production</span></td><td>Azure AD app secret</td></tr>
+    <tr><td><code>REDIRECT_URI</code></td><td><span class="pill teal">Production</span></td><td>OAuth callback URL</td></tr>
+    <tr><td><code>ENCRYPTION_KEY</code></td><td><span class="pill green">Yes</span></td><td>Fernet key for token encryption</td></tr>
+    <tr><td><code>DATABASE_PATH</code></td><td><span class="pill orange">No</span></td><td>SQLite DB path (default: <code>watchdog.db</code>)</td></tr>
+    <tr><td><code>ANTHROPIC_API_KEY</code></td><td><span class="pill purple">For AI</span></td><td>Claude API key</td></tr>
+  </tbody>
+</table>
+<p>Generate an encryption key:</p>
+<pre><code>python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"</code></pre>
+
+<!-- ============================================ -->
+<h2 id="user-guide">User Guide</h2>
+
+<h3>Navigation</h3>
+<p>The portal has four main tabs:</p>
+<div class="tabs-row">
+  <span class="tab-pill green">Scan Overview</span>
+  <span class="tab-pill teal">Token Health</span>
+  <span class="tab-pill purple">Audit Log</span>
+  <span class="tab-pill orange">
+    <svg class="ai-icon" viewBox="0 0 120 120" fill="none"><defs><linearGradient id="g1" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#00C9DB"/><stop offset="100%" stop-color="#5B6CF7"/></linearGradient><linearGradient id="g2" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#5B6CF7"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient></defs><path d="M45 10C48 30 62 48 80 52C62 56 48 70 45 92C42 70 28 56 8 52C28 48 42 30 45 10Z" fill="url(#g1)"/><path d="M80 2C82 14 90 22 102 25C90 28 82 36 80 50C78 36 70 28 58 25C70 22 78 14 80 2Z" fill="url(#g2)"/><path d="M85 72C86 80 90 84 98 86C90 88 86 92 85 100C84 92 80 88 72 86C80 84 84 80 85 72Z" fill="#7C3AED"/></svg>
+    AI Insights
+  </span>
+</div>
+
+<!-- Scan Overview -->
+<h3 id="scan-overview">Scan Overview</h3>
+<div class="card green">
+  <div class="card-label green">License Optimization</div>
+  <div class="card-title">Scan Overview</div>
+  <div class="card-desc">View inactive users, track savings, and manage license statuses across all connected platforms.</div>
+</div>
+
+<p><strong>Headline Metrics</strong></p>
+<ul>
+  <li>Realized savings (from deactivated users)</li>
+  <li>Pending action (unresolved inactive users)</li>
+  <li>Total identified savings (monthly and annual)</li>
+</ul>
+
+<p><strong>Running a Scan</strong></p>
+<ul>
+  <li>Click <strong>Run Scan</strong> to start scanning all connected platforms</li>
+  <li>A progress bar shows real-time status (current platform, % complete)</li>
+  <li>Click <strong>Stop Scan</strong> to cancel a running scan</li>
+</ul>
+
+<p><strong>Managing Inactive Users</strong></p>
+<p>Each organization section shows inactive users grouped by platform. For each user you can see their name, email, last active date, and monthly cost.</p>
+<ol class="steps">
+  <li>Use the <strong>status dropdown</strong> next to each user to change their status</li>
+  <li>Or select multiple users with checkboxes and use <strong>bulk actions</strong></li>
+</ol>
+
+<table>
+  <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><span class="pill orange">Pending</span></td><td>Flagged as inactive, no action taken yet</td></tr>
+    <tr><td><span class="pill green">Deactivated</span></td><td>License reclaimed -counts toward realized savings</td></tr>
+    <tr><td><span class="pill teal">Kept</span></td><td>Intentionally retained (business justification)</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Filters:</strong> Filter by platform using the dropdown, or search by status text.</p>
+
+<!-- Token Health -->
+<h3 id="token-health">Token Health & Rotation</h3>
+<div class="card teal">
+  <div class="card-label teal">Credential Management</div>
+  <div class="card-title">Token Health & Rotation</div>
+  <div class="card-desc">Centralized credential management with a 90-day rotation policy.</div>
+</div>
+
+<p><strong>Health Dashboard</strong></p>
+<ul>
+  <li>A health score ring (0–100) summarizes overall token health</li>
+  <li>Token cards show each platform's status:</li>
+</ul>
+<table>
+  <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><span class="pill green">Healthy</span></td><td>Rotated within 90 days</td></tr>
+    <tr><td><span class="pill orange">Due Soon</span></td><td>Rotation approaching</td></tr>
+    <tr><td><span class="pill red">Overdue</span></td><td>Past 90-day rotation window</td></tr>
+    <tr><td><span class="pill purple">Not Configured</span></td><td>No token on file</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Logging a Rotation</strong></p>
+<p>When you rotate a token in the source platform:</p>
+<ol class="steps">
+  <li>Select the <strong>system</strong> from the dropdown</li>
+  <li>Choose <strong>who</strong> performed the rotation</li>
+  <li>Set the <strong>date</strong> the new token was created</li>
+  <li>Click <strong>Save</strong></li>
+</ol>
+<p>This logs the rotation metadata. <strong>Tokens are never stored in the platform</strong> -only rotation tracking data is recorded.</p>
+
+<p><strong>Removing an Integration</strong></p>
+<ul>
+  <li>Click the <strong>X</strong> button on a system to stop tracking its rotation</li>
+  <li>A confirmation prompt prevents accidental removal</li>
+</ul>
+
+<!-- Audit Log -->
+<h3 id="audit-log">Audit Log</h3>
+<div class="card purple">
+  <div class="card-label purple">Compliance</div>
+  <div class="card-title">Audit Log</div>
+  <div class="card-desc">A complete activity history for compliance and accountability.</div>
+</div>
+
+<p><strong>What's Tracked</strong></p>
+<ul>
+  <li>Scan started / completed / cancelled</li>
+  <li>User status changes (pending, deactivated, kept)</li>
+  <li>Bulk status actions</li>
+  <li>Token rotation logging</li>
+  <li>Integration removals</li>
+</ul>
+
+<p><strong>Controls:</strong> Filter by system or view all events. Paginated at 15 entries per page. Each entry shows action, source system, details, user, and timestamp.</p>
+
+<!-- AI Insights -->
+<h3 id="ai-insights">AI Insights</h3>
+<div class="card orange">
+  <div class="card-label orange">
+    <svg class="ai-icon" viewBox="0 0 120 120" fill="none"><defs><linearGradient id="g3" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#00C9DB"/><stop offset="100%" stop-color="#5B6CF7"/></linearGradient><linearGradient id="g4" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#5B6CF7"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient></defs><path d="M45 10C48 30 62 48 80 52C62 56 48 70 45 92C42 70 28 56 8 52C28 48 42 30 45 10Z" fill="url(#g3)"/><path d="M80 2C82 14 90 22 102 25C90 28 82 36 80 50C78 36 70 28 58 25C70 22 78 14 80 2Z" fill="url(#g4)"/><path d="M85 72C86 80 90 84 98 86C90 88 86 92 85 100C84 92 80 88 72 86C80 84 84 80 85 72Z" fill="#7C3AED"/></svg>
+    AI-Powered Analysis
+  </div>
+  <div class="card-title">Executive Summary</div>
+  <div class="card-desc">Intelligent analysis of your scan data to surface what matters most.</div>
+</div>
+
+<p><strong>Generating a Summary</strong></p>
+<ol class="steps">
+  <li>Navigate to the <strong>AI Insights</strong> tab</li>
+  <li>Click <strong>Generate Summary</strong></li>
+  <li>The AI analyzes your latest scan data and produces:</li>
+</ol>
+<ul>
+  <li><strong>Headline</strong> -one-sentence overview</li>
+  <li><strong>Key Findings</strong> -what the scan uncovered</li>
+  <li><strong>Opportunities</strong> -where the biggest savings are, with dollar amounts</li>
+  <li><strong>Recommended Actions</strong> -concrete next steps</li>
+  <li><strong>Bottom Line</strong> -strategic recommendation</li>
+</ul>
+
+<p><strong>Caching:</strong> Summaries are cached and reused until new scan data is available. Click <strong>Generate Summary</strong> again to force a refresh.</p>
+
+<!-- ============================================ -->
+<h2 id="technical-reference">Technical Reference</h2>
+
+<h3 id="architecture">Architecture</h3>
+<div class="tree">
+<pre><code>license-scanner/
+├── <span class="file">app.py</span>              <span class="comment"># Main Streamlit app -all UI logic</span>
+├── <span class="file">auth.py</span>             <span class="comment"># Azure AD OAuth2 via MSAL</span>
+├── <span class="file">config.py</span>           <span class="comment"># Environment config + SYSTEMS registry</span>
+├── <span class="file">storage.py</span>          <span class="comment"># Encrypted token storage (SQLite + Fernet)</span>
+├── <span class="file">ai_summary.py</span>       <span class="comment"># Claude API integration for executive summaries</span>
+├── <span class="file">requirements.txt</span>    <span class="comment"># Python dependencies</span>
+├── <span class="file">render.yaml</span>         <span class="comment"># Render.com deployment blueprint</span>
+├── <span class="file">.env.example</span>        <span class="comment"># Environment variable template</span>
+├── assets/             <span class="comment"># Logo images</span>
+└── Data Files:
+    ├── <span class="file">scan_results.json</span>       <span class="comment"># Latest scan output</span>
+    ├── <span class="file">scan_history.json</span>       <span class="comment"># Historical scan data</span>
+    ├── <span class="file">user_actions.json</span>       <span class="comment"># User status decisions</span>
+    ├── <span class="file">rotation_metadata.json</span>  <span class="comment"># Token rotation tracking</span>
+    ├── <span class="file">user_registry.json</span>      <span class="comment"># Known users</span>
+    ├── <span class="file">audit_log.json</span>          <span class="comment"># Activity log (last 500 entries)</span>
+    ├── <span class="file">ai_summary.json</span>         <span class="comment"># Cached AI summary</span>
+    └── <span class="file">watchdog.db</span>             <span class="comment"># SQLite database</span></code></pre>
+</div>
+
+<h3 id="data-flow">Data Flow</h3>
+<div class="flow-step"><div class="flow-num">1</div><div>An external scanner connects to platform APIs and writes <code>scan_results.json</code></div></div>
+<div class="flow-step"><div class="flow-num">2</div><div>The UI reads and renders scan results -it never calls platform APIs directly</div></div>
+<div class="flow-step"><div class="flow-num">3</div><div>User actions (status changes, rotations) are saved to JSON files and SQLite</div></div>
+<div class="flow-step"><div class="flow-num">4</div><div>The audit log captures all state changes with who, what, and when</div></div>
+<div class="flow-step"><div class="flow-num">5</div><div>AI summaries are generated on demand from scan data via the Claude API</div></div>
+
+<h3>Authentication</h3>
+<p><strong>Production:</strong> Azure AD SSO via MSAL authorization code flow. User groups from Azure AD control which systems a user can manage.</p>
+<p><strong>Development:</strong> A dev login fallback accepts any email for local testing. Remove before production deployment.</p>
+
+<h3 id="security">Security</h3>
+<ul class="check-list">
+  <li><strong>Encryption at rest</strong> -all tokens stored with Fernet (AES-128-CBC)</li>
+  <li><strong>No tokens in the platform</strong> -only rotation metadata is tracked</li>
+  <li><strong>Group-based access control</strong> -Azure AD groups restrict system management</li>
+  <li><strong>Audit trail</strong> -every action is logged with user identity and timestamp</li>
+</ul>
+
+<h3>Key Constants</h3>
+<table>
+  <thead><tr><th>Constant</th><th>Value</th><th>Location</th></tr></thead>
+  <tbody>
+    <tr><td>Inactivity threshold</td><td>60 days</td><td>Scanner config</td></tr>
+    <tr><td>Rotation policy</td><td>90 days</td><td><code>app.py</code></td></tr>
+    <tr><td>Audit log retention</td><td>500 entries</td><td><code>app.py</code></td></tr>
+    <tr><td>Audit page size</td><td>15 entries</td><td><code>app.py</code></td></tr>
+    <tr><td>AI model</td><td>claude-sonnet-4-20250514</td><td><code>ai_summary.py</code></td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================ -->
+<h2 id="deployment">Deployment</h2>
+
+<h3 id="render">Render.com</h3>
+<p>The repo includes a <code>render.yaml</code> blueprint for one-click deployment.</p>
+<ol class="steps">
+  <li>Push to GitHub</li>
+  <li>On Render: <strong>New &gt; Web Service</strong> &gt; connect repo</li>
+  <li>Render auto-detects the blueprint</li>
+  <li>Set environment variables in the dashboard: <code>ENCRYPTION_KEY</code>, <code>ANTHROPIC_API_KEY</code>, and Azure AD vars for production</li>
+  <li>Set <code>REDIRECT_URI</code> to your Render URL</li>
+</ol>
+<p><strong>Start command:</strong></p>
+<pre><code>streamlit run app.py --server.port $PORT --server.headless true --server.address 0.0.0.0</code></pre>
+<p><strong>Note:</strong> Render's free tier has an ephemeral filesystem -JSON data files and SQLite reset on redeploy. Use Render's Disk add-on for persistence.</p>
+
+<h3 id="azure">Azure App Service</h3>
+<ol class="steps">
+  <li>Create a Python web app in Azure</li>
+  <li>Set environment variables in Application Settings</li>
+  <li>Set startup command: <code>streamlit run app.py --server.port 8000 --server.headless true</code></li>
+  <li>Configure HTTPS and custom domain</li>
+  <li>Add the redirect URI to your Azure AD App Registration</li>
+</ol>
+
+<!-- ============================================ -->
+<h2 id="adding-platforms">Adding New Platforms</h2>
+
+<p>To add a new platform to scan and track:</p>
+
+<ol class="steps">
+  <li><strong>Register the system</strong> in <code>config.py</code></li>
+  <li><strong>Update the scanner</strong> to connect to the new platform's API</li>
+  <li><strong>Deploy</strong> -the UI automatically picks up new systems from the config</li>
+</ol>
+
+<pre><code>SYSTEMS = {
+    # ... existing systems ...
+    "your_system_key": {
+        "name": "Display Name",
+        "description": "What this token is used for",
+        "owner_group": None,
+        "fields": [
+            {"key": "api_token", "label": "API Token", "type": "password"},
+            {"key": "base_url", "label": "Instance URL", "type": "text"},
+        ],
+    },
+}</code></pre>
+
+</main>
+</div><!-- layout -->
+</div><!-- container -->
+
+<div class="footer">
+  Xolv Technology Solutions - License Scanner Project Guide
+</div>
+
+</body>
+</html>
