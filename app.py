@@ -1368,9 +1368,9 @@ def load_scan_progress():
 
 def start_scan():
     """Launch the silent scan runner as a background subprocess, save PID."""
-    runner = Path("/Users/paulgerios/Project2/new_system_watchdog4/system_watchdog/run_scan_silent.py")
-    if not runner.exists():
-        st.error(f"Scan runner not found at {runner}")
+    runner = Path(config.SCAN_RUNNER_PATH) if config.SCAN_RUNNER_PATH else None
+    if not runner or not runner.exists():
+        st.error("Scan runner not configured. Set SCAN_RUNNER_PATH in your .env file.")
         return
     log_file = Path(__file__).parent / "scan_log.txt"
     log = open(log_file, "w")
@@ -2567,7 +2567,7 @@ def show_login_screen_with_dev():
     logo = f'<img src="data:image/png;base64,{LOGO_WHITE}" alt="Xolv" style="height:46px;" />' if LOGO_WHITE else '<span style="font-size:1.5rem;font-weight:800;color:#F1F5F9;letter-spacing:0.05em;">XOLV</span>'
 
     # AI sparkle - simple inline SVG (no <defs> to avoid Streamlit parse issues)
-    ai_star = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:middle;"><path d="M12 2L14 9L21 9L15.5 13.5L17.5 21L12 16.5L6.5 21L8.5 13.5L3 9L10 9Z" fill="url(#aig)"/><defs><linearGradient id="aig" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00C9DB"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient></defs></svg>'
+    ai_star = _ai_icon(12)
 
     # Check if Azure AD is properly configured
     azure_configured = bool(

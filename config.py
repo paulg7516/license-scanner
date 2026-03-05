@@ -23,6 +23,9 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 # Access code (shared login code)
 ACCESS_CODE = os.getenv("ACCESS_CODE", "")
 
+# Scan runner path (path to run_scan_silent.py in the watchdog backend)
+SCAN_RUNNER_PATH = os.getenv("SCAN_RUNNER_PATH", "")
+
 # Database
 DATABASE_PATH = os.getenv("DATABASE_PATH", "watchdog.db")
 
