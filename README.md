@@ -30,6 +30,7 @@ cp .env.example .env
 python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 
 # Paste the key into .env as ENCRYPTION_KEY
+# Set ACCESS_CODE to a shared login code (e.g. ACCESS_CODE=mycode123)
 # Fill in your Azure AD values (see next section)
 ```
 
@@ -39,7 +40,7 @@ python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().d
 streamlit run app.py
 ```
 
-The app opens at **http://localhost:8501**. Use the dev login to test without Azure AD.
+The app opens at **http://localhost:8501**. Log in using the access code set in your `.env` file.
 
 ---
 
@@ -145,7 +146,7 @@ nohup streamlit run app.py --server.port 8501 --server.headless true &
 
 ## Production Checklist
 
-- [ ] Remove the `show_dev_login()` call in `app.py`
+- [ ] Set a strong `ACCESS_CODE` in your environment
 - [ ] Set `REDIRECT_URI` to your production URL
 - [ ] Add production URL to Azure AD App Registration redirect URIs
 - [ ] Store `.env` values as App Service settings (not in files)
@@ -176,4 +177,5 @@ license-watchdog-ui/
 - Tokens are **encrypted at rest** using Fernet (AES-128-CBC) — even if someone gets the database file, they can't read the tokens without the encryption key
 - All token changes are **audit-logged** with timestamp, user email, and action
 - Azure AD groups can **restrict access** so only designated owners can rotate specific tokens
-- The dev login bypass **must be removed** before production deployment
+- Access code authentication provides a shared login for internal users
+- Microsoft SSO via Azure AD is available as an alternative login method
