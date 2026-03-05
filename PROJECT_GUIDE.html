@@ -448,7 +448,6 @@
   <a href="#security" class="sub">Security</a>
   <a href="#deployment">Deployment</a>
   <a href="#render" class="sub">Render.com</a>
-  <a href="#azure" class="sub">Azure App Service</a>
   <a href="#adding-platforms">Adding New Platforms</a>
 </nav>
 
@@ -482,7 +481,7 @@ cp .env.example .env
 
 # Run
 streamlit run app.py --server.port 8501 --server.headless true</code></pre>
-<p>Open <strong>http://localhost:8501</strong> and log in with Dev Mode (no Azure AD required locally).</p>
+<p>Open <strong>http://localhost:8501</strong> and log in with the access code set in your <code>.env</code> file.</p>
 
 <h3 id="env-vars">Environment Variables</h3>
 <table>
@@ -492,6 +491,7 @@ streamlit run app.py --server.port 8501 --server.headless true</code></pre>
     <tr><td><code>AZURE_TENANT_ID</code></td><td><span class="pill teal">Production</span></td><td>Azure AD tenant ID</td></tr>
     <tr><td><code>AZURE_CLIENT_SECRET</code></td><td><span class="pill teal">Production</span></td><td>Azure AD app secret</td></tr>
     <tr><td><code>REDIRECT_URI</code></td><td><span class="pill teal">Production</span></td><td>OAuth callback URL</td></tr>
+    <tr><td><code>ACCESS_CODE</code></td><td><span class="pill green">Yes</span></td><td>Shared access code for login authentication</td></tr>
     <tr><td><code>ENCRYPTION_KEY</code></td><td><span class="pill green">Yes</span></td><td>Fernet key for token encryption</td></tr>
     <tr><td><code>DATABASE_PATH</code></td><td><span class="pill orange">No</span></td><td>SQLite DB path (default: <code>watchdog.db</code>)</td></tr>
     <tr><td><code>ANTHROPIC_API_KEY</code></td><td><span class="pill purple">For AI</span></td><td>Claude API key</td></tr>
@@ -674,8 +674,8 @@ streamlit run app.py --server.port 8501 --server.headless true</code></pre>
 <div class="flow-step"><div class="flow-num">5</div><div>AI summaries are generated on demand from scan data via the Claude API</div></div>
 
 <h3>Authentication</h3>
-<p><strong>Production:</strong> Azure AD SSO via MSAL authorization code flow. User groups from Azure AD control which systems a user can manage.</p>
-<p><strong>Development:</strong> A dev login fallback accepts any email for local testing. Remove before production deployment.</p>
+<p><strong>Access Code:</strong> A shared access code (set via <code>ACCESS_CODE</code> env var) provides simple authentication for internal users.</p>
+<p><strong>Microsoft SSO:</strong> Azure AD SSO via MSAL authorization code flow is available as an alternative login method. User groups from Azure AD control which systems a user can manage.</p>
 
 <h3 id="security">Security</h3>
 <ul class="check-list">
@@ -713,14 +713,6 @@ streamlit run app.py --server.port 8501 --server.headless true</code></pre>
 <pre><code>streamlit run app.py --server.port $PORT --server.headless true --server.address 0.0.0.0</code></pre>
 <p><strong>Note:</strong> Render's free tier has an ephemeral filesystem -JSON data files and SQLite reset on redeploy. Use Render's Disk add-on for persistence.</p>
 
-<h3 id="azure">Azure App Service</h3>
-<ol class="steps">
-  <li>Create a Python web app in Azure</li>
-  <li>Set environment variables in Application Settings</li>
-  <li>Set startup command: <code>streamlit run app.py --server.port 8000 --server.headless true</code></li>
-  <li>Configure HTTPS and custom domain</li>
-  <li>Add the redirect URI to your Azure AD App Registration</li>
-</ol>
 
 <!-- ============================================ -->
 <h2 id="adding-platforms">Adding New Platforms</h2>
