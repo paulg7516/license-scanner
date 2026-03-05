@@ -1173,14 +1173,32 @@ def show_insights():
     # Check cache or generate
     result = None
     if generate:
-        progress_bar = st.progress(0, text="0% - Preparing scan data...")
-        progress_bar.progress(15, text="15% - Preparing scan data for analysis...")
-        progress_bar.progress(30, text="30% - Sending data to Claude AI...")
+        def _ai_progress(pct, label):
+            return f"""
+            <div style="margin:0.5rem 0 0.75rem 0;">
+                <div style="position:relative;height:6px;background:#111827;border:1px solid #2A3548;border-radius:3px;overflow:hidden;">
+                    <div style="
+                        position:absolute;top:0;left:0;bottom:0;
+                        width:{max(pct, 2)}%;
+                        background:linear-gradient(90deg,#A927B2,#F59E0B,#A927B2);
+                        border-radius:3px;
+                        transition:width 0.8s ease;
+                    "></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.35rem;">
+                    <span style="font-size:0.66rem;color:#94A3B8;">{label}</span>
+                    <span style="font-size:0.62rem;font-weight:600;color:#F59E0B;">{pct}%</span>
+                </div>
+            </div>
+            """
+        progress_placeholder = st.empty()
+        progress_placeholder.markdown(_ai_progress(15, "Preparing scan data for analysis..."), unsafe_allow_html=True)
+        progress_placeholder.markdown(_ai_progress(30, "Sending data to Claude AI..."), unsafe_allow_html=True)
         result = ai_summary.generate_summary(force=True)
-        progress_bar.progress(85, text="85% - Processing AI response...")
-        progress_bar.progress(100, text="100% - Analysis complete!")
-        import time; time.sleep(0.5)
-        progress_bar.empty()
+        progress_placeholder.markdown(_ai_progress(85, "Processing AI response..."), unsafe_allow_html=True)
+        progress_placeholder.markdown(_ai_progress(100, "Analysis complete!"), unsafe_allow_html=True)
+        _time.sleep(0.5)
+        progress_placeholder.empty()
     else:
         result = ai_summary.generate_summary(force=False)
 
