@@ -20,6 +20,9 @@ ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY", "")
 # AI (Claude API)
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 
+# Access code (shared login code)
+ACCESS_CODE = os.getenv("ACCESS_CODE", "")
+
 # Database
 DATABASE_PATH = os.getenv("DATABASE_PATH", "watchdog.db")
 

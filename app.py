@@ -220,9 +220,36 @@ if IS_LOGGED_IN:
 else:
     CONTAINER_CSS = """
     .stApp > header {{ display: none !important; }}
-    .stApp {{ background: #0F172A !important; }}
+    /* Glowing orbs */
+    .login-orb {{
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(100px);
+        opacity: 0.15;
+        z-index: 0;
+        pointer-events: none;
+        animation: orb-float 12s ease-in-out infinite;
+    }}
+    .login-orb-teal {{
+        width: 500px; height: 500px;
+        background: radial-gradient(circle, #028090, transparent 70%);
+        top: -10%; right: -5%;
+    }}
+    .login-orb-purple {{
+        width: 400px; height: 400px;
+        background: radial-gradient(circle, #A927B2, transparent 70%);
+        bottom: -10%; left: -5%;
+        animation-delay: -6s;
+    }}
+    @keyframes orb-float {{
+        0%, 100% {{ transform: translate(0, 0) scale(1); }}
+        33% {{ transform: translate(30px, -20px) scale(1.05); }}
+        66% {{ transform: translate(-20px, 15px) scale(0.95); }}
+    }}
     .main .block-container {{
         padding-top: 3rem !important;
+        position: relative;
+        z-index: 1;
     }}
     /* Hide column borders/gaps for login layout */
     .main [data-testid="stHorizontalBlock"] {{
@@ -536,6 +563,19 @@ st.markdown(f"""
         color: #F87171 !important;
     }}
 
+    /* -- Login card -- */
+    .lcard {{
+        background: #1E293B;
+        border: 1.5px solid #334155;
+        border-radius: 16px;
+        padding: 2.5rem 2rem 1.75rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        margin-bottom: 0.75rem;
+    }}
+
     /* ══════════════════════════════════════════════════
        AUDIT
     ══════════════════════════════════════════════════ */
@@ -556,18 +596,6 @@ st.markdown(f"""
     .dev-lbl {{ font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--warn); margin-bottom: 0.1rem; }}
     .dev-txt {{ font-size: 0.82rem; color: #FBBF24; }}
 
-    /* -- Login card -- */
-    .lcard {{
-        background: #1E293B;
-        border: 1.5px solid #334155;
-        border-radius: 16px;
-        padding: 2.5rem 2rem 1.75rem;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-        margin-bottom: 0.75rem;
-    }}
     .lcard-bar {{
         position: absolute; top: 0; left: 0; right: 0; height: 3px;
         background: linear-gradient(90deg, #028090, #A927B2, #F25239);
@@ -643,35 +671,6 @@ st.markdown(f"""
     .lcard-dev span {{
         font-size: 0.58rem; font-weight: 700; text-transform: uppercase;
         letter-spacing: 0.08em; color: #D97706;
-    }}
-    /* Access code input */
-    .lcard-input {{
-        width: 70%; padding: 0.7rem 1rem; font-size: 0.88rem;
-        background: #0F172A; color: #E2E8F0;
-        border: 1.5px solid #334155; border-radius: 8px;
-        outline: none; box-sizing: border-box;
-        font-family: 'Segoe UI', system-ui, sans-serif;
-        transition: border-color 200ms ease, box-shadow 200ms ease;
-    }}
-    .lcard-input::placeholder {{ color: #64748B; }}
-    .lcard-input:focus {{
-        border-color: #028090;
-        box-shadow: 0 0 0 3px rgba(2,128,144,0.12);
-    }}
-    /* Sign in button */
-    .lcard-btn {{
-        width: 70%; padding: 0.7rem 1.5rem; margin-top: 0.6rem;
-        font-size: 0.88rem; font-weight: 600; color: #FFFFFF;
-        background: #028090; border: none; border-radius: 8px;
-        cursor: pointer; font-family: 'Segoe UI', system-ui, sans-serif;
-        transition: all 150ms ease;
-    }}
-    .lcard-btn:hover {{
-        background: #03939F;
-        box-shadow: 0 4px 12px rgba(2,128,144,0.3);
-    }}
-    .lcard-error {{
-        color: #F87171; font-size: 0.78rem; margin-top: 0.5rem;
     }}
     .lcard-footer {{
         text-align: center; margin-top: 1.5rem;
@@ -2578,19 +2577,17 @@ def show_login_screen_with_dev():
         login_url = "#"
         disabled_css = "opacity:0.45;pointer-events:none;"
 
-    # Handle access code login via query param (set by JS in card)
-    if "access_code" in query_params:
-        code_val = query_params["access_code"]
-        if code_val:
-            st.session_state["user"] = {"name": "User", "email": "user@company.com", "groups": []}
-            st.query_params.clear()
-            st.rerun()
+    # Glowing background orbs
+    st.markdown("""
+        <div class="login-orb login-orb-teal"></div>
+        <div class="login-orb login-orb-purple"></div>
+    """, unsafe_allow_html=True)
 
     # Use st.columns to center content (CSS can't override layout="wide" inline styles)
     _left, center, _right = st.columns([1, 1.2, 1])
 
     with center:
-        # ── Single card: everything inside one HTML block ─────────
+        # ── Full card as single HTML block ────────────────────────
         st.markdown(f"""
             <div class="lcard">
             <div class="lcard-bar"></div>
@@ -2616,44 +2613,35 @@ def show_login_screen_with_dev():
                 </div>
             </div>
             <div class="lcard-div"></div>
+            </div>
+        """, unsafe_allow_html=True)
 
-            <input type="password" class="lcard-input" id="accessCode"
-                   placeholder="Enter your access code" autocomplete="off" />
-            <button class="lcard-btn" onclick="submitAccessCode()">Sign in</button>
-            <div id="accessError" class="lcard-error" style="display:none;">Please enter an access code.</div>
+        # ── Access code + Sign in (Streamlit widgets) ─────────────
+        access_code = st.text_input("Access code", placeholder="Enter your access code", label_visibility="collapsed", type="password")
+        if st.button("Sign in", use_container_width=True, type="primary"):
+            if access_code and config.ACCESS_CODE and access_code == config.ACCESS_CODE:
+                st.session_state["user"] = {"name": "User", "email": "user@company.com", "groups": []}
+                st.rerun()
+            elif not access_code:
+                st.error("Please enter an access code.")
+            else:
+                st.error("Invalid access code.")
 
+        # ── "or" divider + Microsoft SSO ──────────────────────────
+        st.markdown(f"""
             <div class="lcard-or">
                 <div class="lcard-or-line"></div>
                 <span class="lcard-or-text">or</span>
                 <div class="lcard-or-line"></div>
             </div>
-            <div style="text-align:center; margin-top:0.25rem;">
+            <div style="text-align:center; margin-top:0.5rem;">
                 <a href="{login_url}" class="lcard-sso" style="{disabled_css}">
                     {ms_logo} Sign in with Microsoft
                 </a>
             </div>
-            </div>
-
-            <div class="lcard-footer">Protected by Xolv Technology Solutions</div>
-
-            <script>
-            function submitAccessCode() {{
-                var code = document.getElementById('accessCode').value;
-                if (!code) {{
-                    document.getElementById('accessError').style.display = 'block';
-                    return;
-                }}
-                document.getElementById('accessError').style.display = 'none';
-                var url = new URL(window.location);
-                url.searchParams.set('access_code', code);
-                window.location.href = url.toString();
-            }}
-            document.getElementById('accessCode').addEventListener('keydown', function(e) {{
-                if (e.key === 'Enter') submitAccessCode();
-            }});
-            </script>
         """, unsafe_allow_html=True)
 
+    st.markdown('<div class="lcard-footer">Protected by Xolv Technology Solutions</div>', unsafe_allow_html=True)
 
 # ------------------------------------------------------------------
 # Entry - uses IS_LOGGED_IN checked before CSS was built
