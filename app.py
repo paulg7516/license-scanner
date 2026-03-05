@@ -18,7 +18,7 @@ from pathlib import Path
 import config
 import auth
 import storage
-import ai_summary
+# ai_summary imported lazily in show_insights() to avoid loading anthropic on every page
 
 
 # ── User Action Tracking ──────────────────────────────────────────
@@ -1114,6 +1114,7 @@ def _platform_logo(text: str, size: int = 18) -> str:
     return ""
 
 def show_insights():
+    import ai_summary
     sparkle = _ai_sparkle()
     ai_icon = _ai_icon
 
@@ -1162,8 +1163,14 @@ def show_insights():
     # Check cache or generate
     result = None
     if generate:
-        with st.spinner("Claude is analyzing your scan data..."):
-            result = ai_summary.generate_summary(force=True)
+        progress_bar = st.progress(0, text="Preparing scan data for analysis...")
+        progress_bar.progress(15, text="Preparing scan data for analysis...")
+        progress_bar.progress(30, text="Sending data to Claude AI...")
+        result = ai_summary.generate_summary(force=True)
+        progress_bar.progress(85, text="Processing AI response...")
+        progress_bar.progress(100, text="Analysis complete!")
+        import time; time.sleep(0.5)
+        progress_bar.empty()
     else:
         result = ai_summary.generate_summary(force=False)
 
