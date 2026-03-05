@@ -814,6 +814,16 @@ st.markdown(f"""
     .tcell-plat img {{ width: 14px; height: 14px; border-radius: 2px; }}
     .tcell-dim {{ opacity: 0.4; }}
 
+    /* ── AI Progress Bar Gradient ── */
+    .stProgress > div > div > div {{
+        background: linear-gradient(90deg, #028090, #5B6CF7, #A927B2, #F59E0B) !important;
+        border-radius: 8px !important;
+    }}
+    .stProgress > div > div {{
+        background: rgba(255,255,255,0.05) !important;
+        border-radius: 8px !important;
+    }}
+
     /* ── AI Shared Identity (matches AI Insights palette) ── */
 
     /* AI Score pills */
@@ -1163,12 +1173,12 @@ def show_insights():
     # Check cache or generate
     result = None
     if generate:
-        progress_bar = st.progress(0, text="Preparing scan data for analysis...")
-        progress_bar.progress(15, text="Preparing scan data for analysis...")
-        progress_bar.progress(30, text="Sending data to Claude AI...")
+        progress_bar = st.progress(0, text="0% - Preparing scan data...")
+        progress_bar.progress(15, text="15% - Preparing scan data for analysis...")
+        progress_bar.progress(30, text="30% - Sending data to Claude AI...")
         result = ai_summary.generate_summary(force=True)
-        progress_bar.progress(85, text="Processing AI response...")
-        progress_bar.progress(100, text="Analysis complete!")
+        progress_bar.progress(85, text="85% - Processing AI response...")
+        progress_bar.progress(100, text="100% - Analysis complete!")
         import time; time.sleep(0.5)
         progress_bar.empty()
     else:
