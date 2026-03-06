@@ -439,9 +439,9 @@
   <a href="#env-vars" class="sub">Environment Variables</a>
   <a href="#user-guide">User Guide</a>
   <a href="#scan-overview" class="sub">Scan Overview</a>
-  <a href="#token-health" class="sub">Token Health & Rotation</a>
-  <a href="#audit-log" class="sub">Audit Log</a>
   <a href="#ai-insights" class="sub">AI Insights</a>
+  <a href="#audit-log" class="sub">Audit Log</a>
+  <a href="#integrations" class="sub">Integrations</a>
   <a href="#technical-reference">Technical Reference</a>
   <a href="#architecture" class="sub">Architecture</a>
   <a href="#data-flow" class="sub">Data Flow</a>
@@ -455,7 +455,7 @@
 <main class="content">
 
 <h1>License Scanner</h1>
-<p class="subtitle">A self-service web portal for managing SaaS license optimization and API token rotation. Scans platforms like PagerDuty, Atlassian, and GitLab to identify inactive users, surface cost savings, and provide centralized credential management with a full audit trail.</p>
+<p class="subtitle">A self-service web portal for managing SaaS license optimization. Scans platforms like PagerDuty, Atlassian, and GitLab to identify inactive users, surface cost savings, and monitor API integration health with a full audit trail.</p>
 
 <!-- ============================================ -->
 <h2 id="getting-started">Getting Started</h2>
@@ -495,6 +495,7 @@ streamlit run app.py --server.port 8501 --server.headless true</code></pre>
     <tr><td><code>ENCRYPTION_KEY</code></td><td><span class="pill green">Yes</span></td><td>Fernet key for token encryption</td></tr>
     <tr><td><code>DATABASE_PATH</code></td><td><span class="pill orange">No</span></td><td>SQLite DB path (default: <code>watchdog.db</code>)</td></tr>
     <tr><td><code>ANTHROPIC_API_KEY</code></td><td><span class="pill purple">For AI</span></td><td>Claude API key</td></tr>
+    <tr><td><code>SCAN_RUNNER_PATH</code></td><td><span class="pill green">Yes</span></td><td>Absolute path to <code>run_scan_silent.py</code> in the watchdog backend</td></tr>
   </tbody>
 </table>
 <p>Generate an encryption key:</p>
@@ -504,15 +505,15 @@ streamlit run app.py --server.port 8501 --server.headless true</code></pre>
 <h2 id="user-guide">User Guide</h2>
 
 <h3>Navigation</h3>
-<p>The portal has four main tabs:</p>
+<p>The portal has four main tabs plus sign out:</p>
 <div class="tabs-row">
   <span class="tab-pill green">Scan Overview</span>
-  <span class="tab-pill teal">Token Health</span>
-  <span class="tab-pill purple">Audit Log</span>
   <span class="tab-pill orange">
     <svg class="ai-icon" viewBox="0 0 120 120" fill="none"><defs><linearGradient id="g1" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#00C9DB"/><stop offset="100%" stop-color="#5B6CF7"/></linearGradient><linearGradient id="g2" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#5B6CF7"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient></defs><path d="M45 10C48 30 62 48 80 52C62 56 48 70 45 92C42 70 28 56 8 52C28 48 42 30 45 10Z" fill="url(#g1)"/><path d="M80 2C82 14 90 22 102 25C90 28 82 36 80 50C78 36 70 28 58 25C70 22 78 14 80 2Z" fill="url(#g2)"/><path d="M85 72C86 80 90 84 98 86C90 88 86 92 85 100C84 92 80 88 72 86C80 84 84 80 85 72Z" fill="#7C3AED"/></svg>
     AI Insights
   </span>
+  <span class="tab-pill purple">Audit Log</span>
+  <span class="tab-pill teal">Integrations</span>
 </div>
 
 <!-- Scan Overview -->
@@ -555,43 +556,32 @@ streamlit run app.py --server.port 8501 --server.headless true</code></pre>
 
 <p><strong>Filters:</strong> Filter by platform using the dropdown, or search by status text.</p>
 
-<!-- Token Health -->
-<h3 id="token-health">Token Health & Rotation</h3>
+<!-- Integrations -->
+<h3 id="integrations">Integrations</h3>
 <div class="card teal">
-  <div class="card-label teal">Credential Management</div>
-  <div class="card-title">Token Health & Rotation</div>
-  <div class="card-desc">Centralized credential management with a 90-day rotation policy.</div>
+  <div class="card-label teal">API Status</div>
+  <div class="card-title">Integrations</div>
+  <div class="card-desc">Live API connection status for all scanned platforms.</div>
 </div>
 
-<p><strong>Health Dashboard</strong></p>
+<p><strong>Integration Cards</strong></p>
 <ul>
-  <li>A health score ring (0–100) summarizes overall token health</li>
-  <li>Token cards show each platform's status:</li>
+  <li>Each configured platform (PagerDuty, GitLab, Atlassian) shows a card with:</li>
 </ul>
 <table>
   <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
   <tbody>
-    <tr><td><span class="pill green">Healthy</span></td><td>Rotated within 90 days</td></tr>
-    <tr><td><span class="pill orange">Due Soon</span></td><td>Rotation approaching</td></tr>
-    <tr><td><span class="pill red">Overdue</span></td><td>Past 90-day rotation window</td></tr>
-    <tr><td><span class="pill purple">Not Configured</span></td><td>No token on file</td></tr>
+    <tr><td><span class="pill green">Connected</span></td><td>API token is valid</td></tr>
+    <tr><td><span class="pill red">Invalid</span></td><td>API token failed validation, with error detail</td></tr>
+    <tr><td><span class="pill purple">Not verified</span></td><td>Not yet checked</td></tr>
   </tbody>
 </table>
 
-<p><strong>Logging a Rotation</strong></p>
-<p>When you rotate a token in the source platform:</p>
-<ol class="steps">
-  <li>Select the <strong>system</strong> from the dropdown</li>
-  <li>Choose <strong>who</strong> performed the rotation</li>
-  <li>Set the <strong>date</strong> the new token was created</li>
-  <li>Click <strong>Save</strong></li>
-</ol>
-<p>This logs the rotation metadata. <strong>Tokens are never stored in the platform</strong> -only rotation tracking data is recorded.</p>
-
-<p><strong>Removing an Integration</strong></p>
+<p><strong>Verifying Tokens</strong></p>
 <ul>
-  <li>Click the <strong>X</strong> button on a system to stop tracking its rotation</li>
-  <li>A confirmation prompt prevents accidental removal</li>
+  <li>Click <strong>Verify All</strong> to test all platform tokens with a lightweight API call</li>
+  <li>Tokens are also verified automatically before each scan</li>
+  <li>Credentials are read from the backend watchdog config (not stored in the UI)</li>
 </ul>
 
 <!-- Audit Log -->
@@ -607,8 +597,6 @@ streamlit run app.py --server.port 8501 --server.headless true</code></pre>
   <li>Scan started / completed / cancelled</li>
   <li>User status changes (pending, deactivated, kept)</li>
   <li>Bulk status actions</li>
-  <li>Token rotation logging</li>
-  <li>Integration removals</li>
 </ul>
 
 <p><strong>Controls:</strong> Filter by system or view all events. Paginated at 15 entries per page. Each entry shows action, source system, details, user, and timestamp.</p>
@@ -659,7 +647,7 @@ streamlit run app.py --server.port 8501 --server.headless true</code></pre>
     ├── <span class="file">scan_results.json</span>       <span class="comment"># Latest scan output</span>
     ├── <span class="file">scan_history.json</span>       <span class="comment"># Historical scan data</span>
     ├── <span class="file">user_actions.json</span>       <span class="comment"># User status decisions</span>
-    ├── <span class="file">rotation_metadata.json</span>  <span class="comment"># Token rotation tracking</span>
+    ├── <span class="file">token_validation.json</span>   <span class="comment"># API token validation results</span>
     ├── <span class="file">user_registry.json</span>      <span class="comment"># Known users</span>
     ├── <span class="file">audit_log.json</span>          <span class="comment"># Activity log (last 500 entries)</span>
     ├── <span class="file">ai_summary.json</span>         <span class="comment"># Cached AI summary</span>
@@ -668,10 +656,11 @@ streamlit run app.py --server.port 8501 --server.headless true</code></pre>
 
 <h3 id="data-flow">Data Flow</h3>
 <div class="flow-step"><div class="flow-num">1</div><div>An external scanner connects to platform APIs and writes <code>scan_results.json</code></div></div>
-<div class="flow-step"><div class="flow-num">2</div><div>The UI reads and renders scan results -it never calls platform APIs directly</div></div>
-<div class="flow-step"><div class="flow-num">3</div><div>User actions (status changes, rotations) are saved to JSON files and SQLite</div></div>
-<div class="flow-step"><div class="flow-num">4</div><div>The audit log captures all state changes with who, what, and when</div></div>
-<div class="flow-step"><div class="flow-num">5</div><div>AI summaries are generated on demand from scan data via the Claude API</div></div>
+<div class="flow-step"><div class="flow-num">2</div><div>The UI reads and renders scan results</div></div>
+<div class="flow-step"><div class="flow-num">3</div><div>The Integrations page makes lightweight API calls to validate token health (reads credentials from the backend config)</div></div>
+<div class="flow-step"><div class="flow-num">4</div><div>User actions (status changes) are saved to JSON files and SQLite</div></div>
+<div class="flow-step"><div class="flow-num">5</div><div>The audit log captures all state changes with who, what, and when</div></div>
+<div class="flow-step"><div class="flow-num">6</div><div>AI summaries are generated on demand from scan data via the Claude API</div></div>
 
 <h3>Authentication</h3>
 <p><strong>Access Code:</strong> A shared access code (set via <code>ACCESS_CODE</code> env var) provides simple authentication for internal users.</p>
@@ -679,8 +668,7 @@ streamlit run app.py --server.port 8501 --server.headless true</code></pre>
 
 <h3 id="security">Security</h3>
 <ul class="check-list">
-  <li><strong>Encryption at rest</strong> -all tokens stored with Fernet (AES-128-CBC)</li>
-  <li><strong>No tokens in the platform</strong> -only rotation metadata is tracked</li>
+  <li><strong>No credentials in the UI</strong> -API tokens live in the backend watchdog config; the UI only reads them for validation and never displays them</li>
   <li><strong>Group-based access control</strong> -Azure AD groups restrict system management</li>
   <li><strong>Audit trail</strong> -every action is logged with user identity and timestamp</li>
 </ul>
@@ -690,10 +678,10 @@ streamlit run app.py --server.port 8501 --server.headless true</code></pre>
   <thead><tr><th>Constant</th><th>Value</th><th>Location</th></tr></thead>
   <tbody>
     <tr><td>Inactivity threshold</td><td>60 days</td><td>Scanner config</td></tr>
-    <tr><td>Rotation policy</td><td>90 days</td><td><code>app.py</code></td></tr>
     <tr><td>Audit log retention</td><td>500 entries</td><td><code>app.py</code></td></tr>
     <tr><td>Audit page size</td><td>15 entries</td><td><code>app.py</code></td></tr>
     <tr><td>AI model</td><td>claude-sonnet-4-20250514</td><td><code>ai_summary.py</code></td></tr>
+    <tr><td>Token validation timeout</td><td>10 seconds</td><td><code>app.py</code></td></tr>
   </tbody>
 </table>
 

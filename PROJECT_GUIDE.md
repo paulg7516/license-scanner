@@ -2,7 +2,7 @@
 
 ## Overview
 
-License Scanner is a self-service web portal for managing SaaS license optimization and API token rotation. It scans platforms like PagerDuty, Atlassian, and GitLab to identify inactive users, surface cost savings, and provide centralized credential management with a full audit trail.
+License Scanner is a self-service web portal for managing SaaS license optimization. It scans platforms like PagerDuty, Atlassian, and GitLab to identify inactive users, surface cost savings, and monitor API integration health with a full audit trail.
 
 Built by Xolv Technology Solutions.
 
@@ -58,6 +58,7 @@ Open **http://localhost:8501** and log in with the access code set in your `.env
 | `DATABASE_PATH` | No | SQLite DB path (default: `watchdog.db`) |
 | `ACCESS_CODE` | Yes | Shared access code for login authentication |
 | `ANTHROPIC_API_KEY` | For AI | Claude API key from [console.anthropic.com](https://console.anthropic.com/) |
+| `SCAN_RUNNER_PATH` | Yes | Absolute path to `run_scan_silent.py` in the watchdog backend |
 
 ---
 
@@ -65,14 +66,14 @@ Open **http://localhost:8501** and log in with the access code set in your `.env
 
 ### Navigation
 
-The portal has four main tabs:
+The portal has four main tabs plus sign out:
 
 | Tab | Color | Purpose |
 |-----|-------|---------|
 | **Scan Overview** | Green | View inactive users, track savings, manage license statuses |
-| **Token Health** | Teal | Monitor token rotation health, log credential rotations |
+| **AI Insights** | Amber | Generate AI-powered executive summaries of scan data |
 | **Audit Log** | Purple | Review all activity history for compliance |
-| **AI Insights** | Orange | Generate AI-powered executive summaries of scan data |
+| **Integrations** | Teal | Live API connection status for all scanned platforms |
 
 ---
 
@@ -112,31 +113,20 @@ To take action:
 
 ---
 
-### Token Health & Rotation
+### Integrations
 
-Centralized credential management with a 90-day rotation policy.
+Live API connection status for all scanned platforms.
 
-**Health Dashboard**
-- A health score ring (0-100) summarizes overall token health
-- Token cards show each platform's status:
-  - **Healthy** (green) -rotated within 90 days
-  - **Due Soon** (orange) -rotation approaching
-  - **Overdue** (red) -past 90-day rotation window
-  - **Not Configured** -no token on file
+**Integration Cards**
+- Each configured platform (PagerDuty, GitLab, Atlassian) shows a card with:
+  - **Connected** (green) - API token is valid
+  - **Invalid** (red) - API token failed validation, with error detail
+  - **Not verified** (gray) - not yet checked
 
-**Logging a Rotation**
-
-When you rotate a token in the source platform:
-1. Select the **system** from the dropdown
-2. Choose **who** performed the rotation
-3. Set the **date** the new token was created
-4. Click **Save**
-
-This logs the rotation metadata. Tokens are never stored in the platform -only rotation tracking data is recorded.
-
-**Removing an Integration**
-- Click the **X** button on a system to stop tracking its rotation
-- A confirmation prompt prevents accidental removal
+**Verifying Tokens**
+- Click **Verify All** to test all platform tokens with a lightweight API call
+- Tokens are also verified automatically before each scan
+- Credentials are read from the backend watchdog config (not stored in the UI)
 
 ---
 
@@ -149,7 +139,6 @@ A complete activity history for compliance and accountability.
 - User status changes (pending, deactivated, kept)
 - Bulk status actions
 - Token rotation logging
-- Integration removals
 
 **Controls**
 - Filter by system or view all events
@@ -197,7 +186,7 @@ license-scanner/
     ├── scan_results.json       # Latest scan output (written by external scanner)
     ├── scan_history.json       # Historical scan data for trends
     ├── user_actions.json       # User status decisions
-    ├── rotation_metadata.json  # Token rotation tracking
+    ├── token_validation.json   # API token validation results
     ├── user_registry.json      # Known users (auto-populated on login)
     ├── audit_log.json          # Activity log (last 500 entries)
     ├── ai_summary.json         # Cached AI summary
@@ -206,11 +195,12 @@ license-scanner/
 
 ### Data Flow
 
-1. An external scanner (`system_scanner`) connects to platform APIs and writes `scan_results.json`
-2. The UI reads and renders scan results -it never calls platform APIs directly
-3. User actions (status changes, rotations) are saved to JSON files and SQLite
-4. The audit log captures all state changes with who, what, and when
-5. AI summaries are generated on demand from scan data via the Claude API
+1. An external scanner (`system_watchdog`) connects to platform APIs and writes `scan_results.json`
+2. The UI reads and renders scan results
+3. The Integrations page makes lightweight API calls to validate token health (reads credentials from the backend config)
+4. User actions (status changes) are saved to JSON files and SQLite
+5. The audit log captures all state changes with who, what, and when
+6. AI summaries are generated on demand from scan data via the Claude API
 
 ### Authentication
 
@@ -220,8 +210,8 @@ license-scanner/
 
 ### Security
 
-- **Encryption at rest** -all tokens stored with Fernet (AES-128-CBC)
-- **No tokens in the platform** -only rotation metadata is tracked; credentials are stored encrypted in SQLite and never displayed
+- **Encryption at rest** -tokens in SQLite are encrypted with Fernet (AES-128-CBC)
+- **No credentials in the UI** -API tokens live in the backend watchdog config; the UI only reads them for validation and never displays them
 - **Group-based access control** -Azure AD groups restrict system management
 - **Audit trail** -every action is logged with user identity and timestamp
 
@@ -230,10 +220,10 @@ license-scanner/
 | Constant | Value | Location |
 |----------|-------|----------|
 | Inactivity threshold | 60 days | Scanner config |
-| Rotation policy | 90 days | `app.py` (`ROTATION_POLICY_DAYS`) |
 | Audit log retention | 500 entries | `app.py` |
 | Audit page size | 15 entries | `app.py` (`AUDIT_PER_PAGE`) |
 | AI model | claude-sonnet-4-20250514 | `ai_summary.py` |
+| Token validation timeout | 10 seconds | `app.py` (`validate_token()`) |
 
 ---
 
