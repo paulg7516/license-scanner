@@ -1,5 +1,5 @@
 """
-License Scanner - Token Health Portal
+License Scanner - Integration Portal
 Xolv Technology Solutions
 
 Run with:  streamlit run app.py
@@ -15,6 +15,7 @@ import time as _time
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import requests
 import config
 import auth
 import storage
@@ -110,31 +111,120 @@ def get_known_users():
     return sorted(reg.keys())
 
 
-# ── Rotation Metadata (created_on, rotated_by per system) ────────
-ROTATION_META_FILE = Path(__file__).parent / "rotation_metadata.json"
+# ── Token Validation (Platform API Health Check) ─────────────────
+TOKEN_VALIDATION_FILE = Path(__file__).parent / "token_validation.json"
 
-def load_rotation_metadata():
-    if ROTATION_META_FILE.exists():
+def load_token_validation():
+    """Load all token validation results."""
+    if TOKEN_VALIDATION_FILE.exists():
         try:
-            return json.loads(ROTATION_META_FILE.read_text())
+            return json.loads(TOKEN_VALIDATION_FILE.read_text())
         except (json.JSONDecodeError, IOError):
             return {}
     return {}
 
-def save_rotation_entry(system_key, rotated_by, created_on, logged_by):
-    """Save rotation metadata for a system."""
-    meta = load_rotation_metadata()
-    meta[system_key] = {
-        "rotated_by": rotated_by,
-        "created_on": created_on,
-        "logged_by": logged_by,
-        "logged_on": datetime.utcnow().isoformat(),
-    }
-    ROTATION_META_FILE.write_text(json.dumps(meta, indent=2))
+def save_token_validation(system_key, result):
+    """Save a single token validation result."""
+    data = load_token_validation()
+    data[system_key] = result
+    TOKEN_VALIDATION_FILE.write_text(json.dumps(data, indent=2))
 
-def get_rotation_entry(system_key):
-    """Get rotation metadata for a system, or None."""
-    return load_rotation_metadata().get(system_key)
+def get_token_validation(system_key):
+    """Get validation result for a system, or None."""
+    return load_token_validation().get(system_key)
+
+def _load_backend_config():
+    """Load the backend watchdog CONFIG dict for token validation."""
+    runner_path = config.SCAN_RUNNER_PATH
+    if not runner_path:
+        return None
+    config_file = Path(runner_path).parent / "config.py"
+    if not config_file.exists():
+        return None
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("backend_config", str(config_file))
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return getattr(mod, "CONFIG", None)
+    except Exception:
+        return None
+
+def validate_token(system_key):
+    """Validate a single token by making a lightweight API call to the platform.
+    Reads credentials from the backend watchdog config.
+    Returns {"valid": bool, "checked_at": str, "error": str|None}
+    """
+    backend_cfg = _load_backend_config()
+    if not backend_cfg:
+        return {"valid": False, "checked_at": datetime.utcnow().isoformat(), "error": "Backend config not found"}
+
+    creds = backend_cfg.get(system_key)
+    if not creds:
+        return {"valid": False, "checked_at": datetime.utcnow().isoformat(), "error": "No credentials configured"}
+
+    try:
+        if system_key == "pagerduty":
+            api_url = creds.get("api_url", "https://api.pagerduty.com").rstrip("/")
+            resp = requests.get(
+                f"{api_url}/users?limit=1",
+                headers={
+                    "Authorization": f"Token token={creds.get('api_token', '')}",
+                    "Content-Type": "application/json",
+                },
+                timeout=10,
+            )
+            valid = resp.status_code == 200
+
+        elif system_key.startswith("gitlab_"):
+            api_url = creds.get("api_url", "").rstrip("/")
+            if not api_url:
+                return {"valid": False, "checked_at": datetime.utcnow().isoformat(), "error": "No API URL configured"}
+            resp = requests.get(
+                f"{api_url}/user",
+                headers={"PRIVATE-TOKEN": creds.get("api_token", "")},
+                timeout=10,
+            )
+            valid = resp.status_code == 200
+
+        elif system_key.startswith("atlassian_"):
+            api_url = creds.get("api_url", "").rstrip("/")
+            email = creds.get("email", "")
+            api_token = creds.get("api_token", "")
+            if not api_url:
+                return {"valid": False, "checked_at": datetime.utcnow().isoformat(), "error": "No API URL configured"}
+            resp = requests.get(
+                f"{api_url}/myself",
+                auth=(email, api_token),
+                timeout=10,
+            )
+            valid = resp.status_code == 200
+
+        else:
+            return {"valid": False, "checked_at": datetime.utcnow().isoformat(), "error": "Unknown platform"}
+
+        result = {
+            "valid": valid,
+            "checked_at": datetime.utcnow().isoformat(),
+            "error": None if valid else f"HTTP {resp.status_code}",
+        }
+
+    except requests.exceptions.Timeout:
+        result = {"valid": False, "checked_at": datetime.utcnow().isoformat(), "error": "Connection timed out"}
+    except requests.exceptions.ConnectionError:
+        result = {"valid": False, "checked_at": datetime.utcnow().isoformat(), "error": "Connection failed"}
+    except Exception as e:
+        result = {"valid": False, "checked_at": datetime.utcnow().isoformat(), "error": str(e)}
+
+    save_token_validation(system_key, result)
+    return result
+
+def validate_all_tokens():
+    """Validate all configured system tokens. Returns dict keyed by system_key."""
+    results = {}
+    for sys_key in config.SYSTEMS:
+        results[sys_key] = validate_token(sys_key)
+    return results
 
 
 # ── Audit Log ────────────────────────────────────────────────────
@@ -482,33 +572,18 @@ st.markdown(f"""
     button[data-testid="stBaseButton-primary"]:hover {{ background: var(--teal-h) !important; box-shadow: 0 4px 16px rgba(2,128,144,0.35) !important; }}
     button[data-testid="stBaseButton-primary"]:disabled {{ background: var(--bdr) !important; color: var(--t4) !important; box-shadow: none !important; }}
 
-    /* Tab colors - Scan Overview (green), Rotate Tokens (teal), Audit Log (purple), AI Insights (orange) */
-    div[data-testid="column"]:nth-child(1) button[data-testid="stBaseButton-primary"],
-    div[data-testid="stColumn"]:nth-child(1) button[data-testid="stBaseButton-primary"] {{
+    /* Nav tab: Scan Overview - green (key-based) */
+    .st-key-nav_overview button[data-testid="stBaseButton-primary"] {{
         background: #10B981 !important; box-shadow: 0 2px 8px rgba(16,185,129,0.25) !important;
     }}
-    div[data-testid="column"]:nth-child(1) button[data-testid="stBaseButton-primary"]:hover,
-    div[data-testid="stColumn"]:nth-child(1) button[data-testid="stBaseButton-primary"]:hover {{
+    .st-key-nav_overview button[data-testid="stBaseButton-primary"]:hover {{
         background: #059669 !important; box-shadow: 0 4px 16px rgba(16,185,129,0.35) !important;
     }}
-    div[data-testid="column"]:nth-child(3) button[data-testid="stBaseButton-primary"],
-    div[data-testid="stColumn"]:nth-child(3) button[data-testid="stBaseButton-primary"] {{
-        background: #A927B2 !important; box-shadow: 0 2px 8px rgba(169,39,178,0.25) !important;
-    }}
-    div[data-testid="column"]:nth-child(3) button[data-testid="stBaseButton-primary"]:hover,
-    div[data-testid="stColumn"]:nth-child(3) button[data-testid="stBaseButton-primary"]:hover {{
-        background: #9320A1 !important; box-shadow: 0 4px 16px rgba(169,39,178,0.35) !important;
-    }}
-    div[data-testid="column"]:nth-child(4) button[data-testid="stBaseButton-primary"],
-    div[data-testid="stColumn"]:nth-child(4) button[data-testid="stBaseButton-primary"],
-    div[data-testid="column"]:nth-child(4) button[data-testid="stBaseButton-secondary"],
-    div[data-testid="stColumn"]:nth-child(4) button[data-testid="stBaseButton-secondary"] {{
+    /* Nav tab: AI Insights - amber + sparkle icon */
+    .st-key-btn_ai_insights button {{
         padding-left: 2rem !important;
     }}
-    div[data-testid="column"]:nth-child(4) button[data-testid="stBaseButton-primary"]::before,
-    div[data-testid="stColumn"]:nth-child(4) button[data-testid="stBaseButton-primary"]::before,
-    div[data-testid="column"]:nth-child(4) button[data-testid="stBaseButton-secondary"]::before,
-    div[data-testid="stColumn"]:nth-child(4) button[data-testid="stBaseButton-secondary"]::before {{
+    .st-key-btn_ai_insights button::before {{
         content: '';
         display: inline-block;
         width: 16px; height: 16px;
@@ -518,13 +593,18 @@ st.markdown(f"""
         background-size: contain;
         background-repeat: no-repeat;
     }}
-    div[data-testid="column"]:nth-child(4) button[data-testid="stBaseButton-primary"],
-    div[data-testid="stColumn"]:nth-child(4) button[data-testid="stBaseButton-primary"] {{
+    .st-key-btn_ai_insights button[data-testid="stBaseButton-primary"] {{
         background: #F59E0B !important; box-shadow: 0 2px 8px rgba(245,158,11,0.25) !important;
     }}
-    div[data-testid="column"]:nth-child(4) button[data-testid="stBaseButton-primary"]:hover,
-    div[data-testid="stColumn"]:nth-child(4) button[data-testid="stBaseButton-primary"]:hover {{
+    .st-key-btn_ai_insights button[data-testid="stBaseButton-primary"]:hover {{
         background: #D97706 !important; box-shadow: 0 4px 16px rgba(245,158,11,0.35) !important;
+    }}
+    /* Nav tab: Audit Log - purple */
+    .st-key-nav_audit button[data-testid="stBaseButton-primary"] {{
+        background: #A927B2 !important; box-shadow: 0 2px 8px rgba(169,39,178,0.25) !important;
+    }}
+    .st-key-nav_audit button[data-testid="stBaseButton-primary"]:hover {{
+        background: #9320A1 !important; box-shadow: 0 4px 16px rgba(169,39,178,0.35) !important;
     }}
 
     button[data-testid="stBaseButton-secondary"] {{ font-family: 'Segoe UI', sans-serif !important; border-radius: var(--rs) !important; font-size: 0.84rem !important; background: var(--bg-c) !important; color: var(--t2) !important; border: 1px solid var(--bdr) !important; }}
@@ -546,18 +626,13 @@ st.markdown(f"""
         filter: brightness(1.1) !important;
     }}
 
-    /* Sign out - red text (5th column) */
-    div[data-testid="column"]:last-child button[data-testid="stBaseButton-secondary"],
-    div[data-testid="stColumn"]:last-child button[data-testid="stBaseButton-secondary"],
-    div[data-testid="column"]:nth-child(5) button[data-testid="stBaseButton-secondary"],
-    div[data-testid="stColumn"]:nth-child(5) button[data-testid="stBaseButton-secondary"] {{
+
+    /* Nav tab: Sign out - red text */
+    .st-key-signout_btn button[data-testid="stBaseButton-secondary"] {{
         color: #EF4444 !important;
         border-color: rgba(239,68,68,0.3) !important;
     }}
-    div[data-testid="column"]:last-child button[data-testid="stBaseButton-secondary"]:hover,
-    div[data-testid="stColumn"]:last-child button[data-testid="stBaseButton-secondary"]:hover,
-    div[data-testid="column"]:nth-child(5) button[data-testid="stBaseButton-secondary"]:hover,
-    div[data-testid="stColumn"]:nth-child(5) button[data-testid="stBaseButton-secondary"]:hover {{
+    .st-key-signout_btn button[data-testid="stBaseButton-secondary"]:hover {{
         background: rgba(239,68,68,0.1) !important;
         border-color: rgba(239,68,68,0.5) !important;
         color: #F87171 !important;
@@ -824,6 +899,7 @@ st.markdown(f"""
         border-radius: 8px !important;
     }}
 
+
     /* ── AI Shared Identity (matches AI Insights palette) ── */
 
     /* AI Score pills */
@@ -878,47 +954,13 @@ st.markdown(f"""
     .action-bar {{ background: #0F1525; border: 1px solid #1E293B; border-radius: 8px; padding: 0.5rem 0.65rem; margin: 0.35rem 0; display: flex; align-items: center; gap: 0.5rem; }}
     .action-bar-label {{ font-size: 0.66rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }}
 
-    /* ── Token Health Components ── */
-    .th-strip {{ background: #111827; border: 1.5px solid #2A3548; border-radius: 12px; padding: 0.75rem 1.1rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; position: relative; overflow: hidden; }}
-    .th-strip::before {{ content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #10B981 60%, #F59E0B 80%, #EF4444 100%); opacity: 0.7; }}
-    .th-strip-left {{ display: flex; align-items: center; gap: 0.85rem; }}
-    .th-strip-info h3 {{ font-size: 0.88rem; font-weight: 700; color: #F1F5F9; margin: 0; }}
-    .th-strip-info p {{ font-size: 0.72rem; color: #94A3B8; margin: 0.05rem 0 0 0; }}
-    .th-strip-right {{ display: flex; align-items: center; gap: 1.2rem; }}
-    .th-stat {{ text-align: center; }}
-    .th-stat-num {{ font-family: 'Segoe UI', monospace; font-size: 1.15rem; font-weight: 700; line-height: 1; }}
-    .th-stat-num.thg {{ color: #10B981; }}
-    .th-stat-num.tha {{ color: #F59E0B; }}
-    .th-stat-num.thr {{ color: #EF4444; }}
-    .th-stat-label {{ font-size: 0.58rem; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.15rem; }}
-    .th-div {{ width: 1px; height: 28px; background: #2A3548; }}
-    .th-badge {{ display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 7px; border-radius: 100px; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }}
-    .th-badge-ok {{ background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); color: #10B981; }}
-    .th-badge-warn {{ background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: #F59E0B; }}
-    .th-badge-crit {{ background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #EF4444; }}
-    .th-badge-dot {{ width: 5px; height: 5px; border-radius: 50%; }}
-    .th-badge-ok .th-badge-dot {{ background: #10B981; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }}
-    .th-badge-warn .th-badge-dot {{ background: #F59E0B; box-shadow: 0 0 0 2px rgba(245,158,11,0.2); }}
-    .th-badge-crit .th-badge-dot {{ background: #EF4444; box-shadow: 0 0 0 2px rgba(239,68,68,0.2); }}
-
-    /* Token alert banners */
-    .th-alert {{ border-radius: 10px; padding: 0.55rem 1rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }}
-    .th-alert-red {{ background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2); }}
-    .th-alert-amber {{ background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.2); }}
-    .th-alert-left {{ display: flex; align-items: center; gap: 0.5rem; }}
-    .th-alert-text {{ font-size: 0.76rem; color: #CBD5E1; }}
-    .th-alert-text strong {{ color: #F1F5F9; font-weight: 600; }}
-    .th-alert-btn {{ font-size: 0.68rem; font-weight: 600; padding: 0.3rem 0.75rem; border-radius: 6px; cursor: pointer; white-space: nowrap; border: 1px solid; text-decoration: none; }}
-    .th-alert-btn-red {{ background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); color: #EF4444; }}
-    .th-alert-btn-amber {{ background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); color: #F59E0B; }}
-
-    /* Token cards grid */
-    .th-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.6rem; margin-top: 0.6rem; }}
+    /* ── Integration Cards ── */
+    /* Integration cards */
     .th-card {{ background: #111827; border: 1.5px solid #2A3548; border-radius: 12px; padding: 0.85rem 1rem; position: relative; overflow: hidden; transition: all 0.2s ease; }}
     .th-card:hover {{ background: #151f32; border-color: #3a4a60; }}
     .th-card::before {{ content: ''; position: absolute; top: 10px; bottom: 10px; left: 0; width: 3px; border-radius: 0 3px 3px 0; }}
     .th-card-ok::before {{ background: #10B981; box-shadow: 0 0 8px rgba(16,185,129,0.3); }}
-    .th-card-warn::before {{ background: #F59E0B; box-shadow: 0 0 8px rgba(245,158,11,0.3); }}
+    .th-card-grey::before {{ background: #475569; }}
     .th-card-crit::before {{ background: #EF4444; box-shadow: 0 0 8px rgba(239,68,68,0.3); }}
     .th-card-hdr {{ display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.55rem; }}
     .th-card-plat {{ display: flex; align-items: center; gap: 7px; }}
@@ -926,21 +968,13 @@ st.markdown(f"""
     .th-card-plat span {{ font-size: 0.86rem; font-weight: 600; color: #F1F5F9; }}
     .th-card-dot {{ width: 7px; height: 7px; border-radius: 50%; }}
     .th-card-dot-ok {{ background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }}
-    .th-card-dot-warn {{ background: #F59E0B; box-shadow: 0 0 0 3px rgba(245,158,11,0.15); }}
+    .th-card-dot-grey {{ background: #475569; box-shadow: 0 0 0 3px rgba(71,85,105,0.15); }}
     .th-card-dot-crit {{ background: #EF4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.15); }}
     .th-card-row {{ display: flex; justify-content: space-between; align-items: center; padding: 0.18rem 0; }}
     .th-card-lbl {{ font-size: 0.68rem; color: #64748B; font-weight: 500; }}
     .th-card-val {{ font-family: 'Segoe UI', monospace; font-size: 0.7rem; font-weight: 500; color: #CBD5E1; }}
     .th-card-val-ok {{ color: #10B981; }}
-    .th-card-val-warn {{ color: #F59E0B; }}
     .th-card-val-crit {{ color: #EF4444; }}
-    .th-bar-wrap {{ margin-top: 0.45rem; }}
-    .th-bar-top {{ display: flex; justify-content: space-between; margin-bottom: 0.2rem; }}
-    .th-bar-bg {{ height: 3px; background: #2A3548; border-radius: 3px; overflow: hidden; }}
-    .th-bar-fill {{ height: 100%; border-radius: 3px; }}
-    .th-bar-fill-ok {{ background: linear-gradient(90deg, #10B981, #34d399); }}
-    .th-bar-fill-warn {{ background: linear-gradient(90deg, #F59E0B, #fbbf24); }}
-    .th-bar-fill-crit {{ background: linear-gradient(90deg, #EF4444, #f87171); }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -967,22 +1001,22 @@ def show_header(user):
 
 def show_nav():
     active = st.session_state.page
-    c1, c2, c3, c4, c5 = st.columns([2, 2, 1.5, 1.5, 1])
+    c1, c2, c3, c4, c5 = st.columns([2, 1.5, 1.5, 1.2, 1])
     with c1:
-        if st.button("Scan Overview", use_container_width=True, type="primary" if active == "overview" else "secondary"):
+        if st.button("Scan Overview", use_container_width=True, type="primary" if active == "overview" else "secondary", key="nav_overview"):
             st.session_state.page = "overview"
             st.rerun()
     with c2:
-        if st.button("Token Health", use_container_width=True, type="primary" if active == "tokens" else "secondary"):
-            st.session_state.page = "tokens"
+        if st.button("AI Insights", use_container_width=True, type="primary" if active == "insights" else "secondary", key="btn_ai_insights"):
+            st.session_state.page = "insights"
             st.rerun()
     with c3:
-        if st.button("Audit Log", use_container_width=True, type="primary" if active == "audit" else "secondary"):
+        if st.button("Audit Log", use_container_width=True, type="primary" if active == "audit" else "secondary", key="nav_audit"):
             st.session_state.page = "audit"
             st.rerun()
     with c4:
-        if st.button("AI Insights", use_container_width=True, type="primary" if active == "insights" else "secondary"):
-            st.session_state.page = "insights"
+        if st.button("Integrations", use_container_width=True, type="primary" if active == "tokens" else "secondary"):
+            st.session_state.page = "tokens"
             st.rerun()
     with c5:
         if st.button("Sign out", use_container_width=True, key="signout_btn"):
@@ -991,89 +1025,58 @@ def show_nav():
 
 
 # ------------------------------------------------------------------
-# Token Health Helper
+# Integration Status
 # ------------------------------------------------------------------
-ROTATION_POLICY_DAYS = 90
 
-def get_all_token_health():
-    """Get health status for all configured systems."""
+def get_integration_status():
+    """Get validation status for all configured systems."""
+    val_data = load_token_validation()
     results = []
     for sys_key, sys_info in config.SYSTEMS.items():
-        meta = storage.get_token_metadata(sys_key)
-        rot = get_rotation_entry(sys_key)
-        is_removed = rot.get("removed", False) if rot else False
-        entry = {"key": sys_key, "name": sys_info["name"], "meta": meta}
-        if (not meta and not rot) or is_removed:
-            entry["status"] = "missing"
-            entry["days_left"] = 0
-            entry["pct_elapsed"] = 100
-            entry["last_rotated"] = None
-            entry["expires"] = None
+        v = val_data.get(sys_key)
+        if v:
+            status = "connected" if v.get("valid") else "invalid"
         else:
-            # Use created_on from rotation metadata if available, else fall back to updated_at
-            if rot and rot.get("created_on"):
-                rotated_dt = datetime.fromisoformat(rot["created_on"])
-            elif meta:
-                rotated_dt = datetime.fromisoformat(meta["updated_at"])
-            else:
-                rotated_dt = datetime.utcnow()
-            now_dt = datetime.now(rotated_dt.tzinfo) if rotated_dt.tzinfo else datetime.utcnow()
-            days_since = (now_dt - rotated_dt).days
-            days_left = ROTATION_POLICY_DAYS - days_since
-            pct = min(100, int(days_since / ROTATION_POLICY_DAYS * 100))
-            entry["days_left"] = days_left
-            entry["pct_elapsed"] = pct
-            entry["last_rotated"] = rotated_dt.strftime("%b %d, %Y")
-            entry["expires"] = (rotated_dt + timedelta(days=ROTATION_POLICY_DAYS)).strftime("%b %d, %Y")
-            entry["rotated_by"] = rot.get("rotated_by", "Unknown") if rot else meta.get("updated_by", "Unknown")
-            if days_left <= 0:
-                entry["status"] = "expired"
-            elif days_left <= 14:
-                entry["status"] = "expiring"
-            else:
-                entry["status"] = "healthy"
-        results.append(entry)
+            status = "unchecked"
+        results.append({
+            "key": sys_key,
+            "name": sys_info["name"],
+            "status": status,
+            "checked_at": v.get("checked_at") if v else None,
+            "error": v.get("error") if v else None,
+        })
     return results
 
 def render_compact_health_strip():
-    """Render a subtle one-line token health indicator for the scan overview page."""
-    try:
-        tokens = get_all_token_health()
-    except Exception:
+    """Render a subtle one-line integration status indicator for the scan overview page."""
+    systems = list(config.SYSTEMS.items())
+    if not systems:
         return
 
-    if not tokens:
-        return
+    val_data = load_token_validation()
+    total = len(systems)
+    connected = sum(1 for k in config.SYSTEMS if val_data.get(k, {}).get("valid"))
+    invalid = [config.SYSTEMS[k]["name"] for k in config.SYSTEMS if val_data.get(k, {}).get("valid") is False and val_data.get(k, {}).get("error") != "No credentials stored"]
 
-    healthy = sum(1 for t in tokens if t["status"] == "healthy")
-    expiring = sum(1 for t in tokens if t["status"] == "expiring")
-    expired = sum(1 for t in tokens if t["status"] in ("expired", "missing"))
-    total = len(tokens)
-
-    # Build compact dots: green/amber/red per token
     dots = ""
-    for t in tokens:
-        if t["status"] == "healthy":
+    for sys_key in config.SYSTEMS:
+        v = val_data.get(sys_key)
+        if v and v.get("valid"):
             dots += '<span style="width:6px;height:6px;border-radius:50%;background:#10B981;display:inline-block;"></span>'
-        elif t["status"] == "expiring":
-            dots += '<span style="width:6px;height:6px;border-radius:50%;background:#F59E0B;display:inline-block;"></span>'
-        else:
+        elif v and v.get("valid") is False:
             dots += '<span style="width:6px;height:6px;border-radius:50%;background:#EF4444;display:inline-block;"></span>'
+        else:
+            dots += '<span style="width:6px;height:6px;border-radius:50%;background:#475569;display:inline-block;"></span>'
 
-    # Only show alert text if something needs attention
     alert = ""
-    if expired > 0:
-        bad = [t for t in tokens if t["status"] in ("expired", "missing")]
-        alert = '<span style="color:#EF4444;font-weight:600;">' + bad[0]["name"] + ' needs attention</span>'
-    elif expiring > 0:
-        warn = [t for t in tokens if t["status"] == "expiring"]
-        alert = '<span style="color:#F59E0B;">' + warn[0]["name"] + ' rotation due in ' + str(warn[0]["days_left"]) + 'd</span>'
+    if invalid:
+        alert = '<span style="color:#EF4444;font-weight:600;">' + invalid[0] + ' token invalid</span>'
 
     separator = '<span style="color:#2A3548;margin:0 6px;">|</span>' if alert else ""
 
     st.markdown(
         '<div style="display:flex;align-items:center;gap:5px;padding:0 0.75rem;min-height:38px;font-size:0.72rem;color:#64748B;">'
-        + '<span>' + str(healthy) + '/' + str(total) + ' integrations healthy</span>'
+        + '<span>' + str(connected) + '/' + str(total) + ' integrations connected</span>'
         + '<span style="display:inline-flex;gap:3px;margin:0 4px;">' + dots + '</span>'
         + separator + alert
         + '</div>',
@@ -1390,6 +1393,11 @@ def start_scan():
     if not runner or not runner.exists():
         st.error("Scan runner not configured. Set SCAN_RUNNER_PATH in your .env file.")
         return
+    # Validate all tokens before launching scan
+    try:
+        validate_all_tokens()
+    except Exception:
+        pass  # Non-blocking - scan proceeds even if validation fails
     log_file = Path(__file__).parent / "scan_log.txt"
     log = open(log_file, "w")
     proc = subprocess.Popen(
@@ -1651,33 +1659,6 @@ def show_scan_overview():
     """, unsafe_allow_html=True)
 
 
-    # ── Orphan scan detection (only after a completed scan) ──────
-    if progress and progress.get("status") == "complete":
-        try:
-            tokens_health = get_all_token_health()
-            removed_systems = {t["name"] for t in tokens_health if t["status"] == "missing"}
-            if removed_systems and orgs:
-                scanned_platforms = set()
-                for org_data in orgs.values():
-                    for p in org_data.get("platforms", []):
-                        scanned_platforms.add(p.get("name", ""))
-                for removed in removed_systems:
-                    base = removed.split("[")[0].split("(")[0].strip()
-                    for scanned in scanned_platforms:
-                        if base.lower() in scanned.lower():
-                            st.markdown(
-                                '<div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:0.5rem 0.85rem;margin-bottom:0.5rem;display:flex;align-items:center;gap:8px;">'
-                                + '<span style="font-size:0.82rem;">&#9888;</span>'
-                                + '<span style="font-size:0.76rem;color:#F59E0B;">'
-                                + '<strong>' + removed + '</strong> was removed from console but the scanner is still scanning it. '
-                                + 'Update files configuration to stop scanning, or re-add the token under Token Health.'
-                                + '</span></div>',
-                                unsafe_allow_html=True
-                            )
-                            break
-        except Exception:
-            pass
-
     # ── Per-org breakdown ─────────────────────────────────────────
     if not orgs:
         pass
@@ -1838,26 +1819,26 @@ def show_scan_overview():
                     conf_low_ct = sum(1 for *_, c in filtered if c["level"] == "low")
                     ai_ico = _ai_icon(14, '#F59E0B')
                     st.markdown(f'''<div class="conf-banner">
-                        <div class="conf-banner-top">
-                            <span class="conf-banner-sparkle">{ai_ico}</span>
-                            <span class="conf-banner-ai">AI Recommendation</span>
-                            <span class="conf-banner-sub">Login activity &middot; Inactivity duration &middot; Escalation policy</span>
-                        </div>
-                        <div class="conf-banner-counts">
-                            <div class="conf-banner-item">
-                                <span class="conf-banner-ct" style="color:#6EE7B7;">{conf_high_ct}</span>
-                                <span class="conf-banner-label" style="color:#6EE7B7;">Safe to deactivate</span>
+                            <div class="conf-banner-top">
+                                <span class="conf-banner-sparkle">{ai_ico}</span>
+                                <span class="conf-banner-ai">AI Recommendation</span>
+                                <span class="conf-banner-sub">Login activity &middot; Inactivity duration &middot; Escalation policy</span>
                             </div>
-                            <div class="conf-banner-item">
-                                <span class="conf-banner-ct" style="color:#F59E0B;">{conf_med_ct}</span>
-                                <span class="conf-banner-label" style="color:#F59E0B;">Review recommended</span>
+                            <div class="conf-banner-counts">
+                                <div class="conf-banner-item">
+                                    <span class="conf-banner-ct" style="color:#6EE7B7;">{conf_high_ct}</span>
+                                    <span class="conf-banner-label" style="color:#6EE7B7;">Safe to deactivate</span>
+                                </div>
+                                <div class="conf-banner-item">
+                                    <span class="conf-banner-ct" style="color:#F59E0B;">{conf_med_ct}</span>
+                                    <span class="conf-banner-label" style="color:#F59E0B;">Review recommended</span>
+                                </div>
+                                <div class="conf-banner-item">
+                                    <span class="conf-banner-ct" style="color:#FCA5A5;">{conf_low_ct}</span>
+                                    <span class="conf-banner-label" style="color:#FCA5A5;">Needs investigation</span>
+                                </div>
                             </div>
-                            <div class="conf-banner-item">
-                                <span class="conf-banner-ct" style="color:#FCA5A5;">{conf_low_ct}</span>
-                                <span class="conf-banner-label" style="color:#FCA5A5;">Needs investigation</span>
-                            </div>
-                        </div>
-                    </div>''', unsafe_allow_html=True)
+                        </div>''', unsafe_allow_html=True)
 
                     st.markdown('<div style="height:0.3rem;"></div>', unsafe_allow_html=True)
 
@@ -2220,287 +2201,68 @@ def show_trend_chart(history):
 # Tokens
 # ------------------------------------------------------------------
 def show_tokens(user):
-    st.markdown("""<div class="phdr"><div class="phdr-ey">Credential Management</div>
-        <div class="phdr-t">Token Health & Rotation</div>
-        <div class="phdr-d">Monitor integration health, rotate API credentials, and maintain scan continuity across all platforms.</div></div>""", unsafe_allow_html=True)
+    st.markdown("""<div class="phdr"><div class="phdr-ey">Platform Connectivity</div>
+        <div class="phdr-t">Integrations</div>
+        <div class="phdr-d">Live status of API connections across all scanned platforms.</div></div>""", unsafe_allow_html=True)
 
-    # ── Token Health Dashboard ────────────────────────────────────
-    try:
-        tokens = get_all_token_health()
-    except Exception:
-        tokens = []
+    integrations = get_integration_status()
+    LOGO_OVERRIDES = {"Atlassian": "atlassian", "PagerDuty": "pagerduty", "GitHub": "github", "GitLab": "gitlab"}
 
-    if tokens:
-        healthy = sum(1 for t in tokens if t["status"] == "healthy")
-        expiring = sum(1 for t in tokens if t["status"] == "expiring")
-        expired = sum(1 for t in tokens if t["status"] in ("expired", "missing"))
-        total = len(tokens)
+    # ── Verify button ──
+    _, btn_col = st.columns([5, 1.5])
+    with btn_col:
+        if st.button("Verify All", type="primary", key="verify_all_btn", use_container_width=True):
+            with st.spinner("Checking tokens..."):
+                validate_all_tokens()
+            st.rerun()
 
-        # Health score: 100 = all healthy, -20 per expiring, -40 per expired
-        score = max(0, int(100 - (expiring * 20) - (expired * 40)))
+    # ── Integration cards (single row) ──
+    cols = st.columns(len(integrations))
+    for ci, t in enumerate(integrations):
+            base_name = t["name"].split("[")[0].split("(")[0].strip()
+            icon_name = LOGO_OVERRIDES.get(base_name, base_name.lower())
+            icon_url = f"https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/{icon_name}.png"
 
-        if expired > 0:
-            badge_cls, badge_txt = "th-badge-crit", "Action Required"
-        elif expiring > 0:
-            badge_cls, badge_txt = "th-badge-warn", "Needs Attention"
-        else:
-            badge_cls, badge_txt = "th-badge-ok", "All Healthy"
+            if t["status"] == "connected":
+                cls, dot, val_cls = "th-card-ok", "th-card-dot-ok", "th-card-val-ok"
+                status_label = "Connected"
+            elif t["status"] == "invalid":
+                cls, dot, val_cls = "th-card-crit", "th-card-dot-crit", "th-card-val-crit"
+                status_label = "Invalid"
+            else:
+                cls, dot, val_cls = "th-card-grey", "th-card-dot-grey", ""
+                status_label = "Not verified"
 
-        # Score ring color
-        if score >= 70:
-            ring_color = "#10B981"
-        elif score >= 40:
-            ring_color = "#F59E0B"
-        else:
-            ring_color = "#EF4444"
-
-        # SVG ring math: circumference = 2 * pi * 22 = 138.23, offset = circ * (1 - score/100)
-        circ = 138.23
-        offset = circ * (1 - score / 100)
-
-        st.markdown(f"""
-        <div class="th-strip">
-            <div class="th-strip-left">
-                <div style="position:relative;width:52px;height:52px;">
-                    <svg viewBox="0 0 48 48" style="transform:rotate(-90deg);width:52px;height:52px;">
-                        <circle cx="24" cy="24" r="22" fill="none" stroke="#2A3548" stroke-width="4.5" />
-                        <circle cx="24" cy="24" r="22" fill="none" stroke="{ring_color}" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="{circ}" stroke-dashoffset="{offset}" />
-                    </svg>
-                    <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Segoe UI',monospace;font-size:0.92rem;font-weight:700;color:#F1F5F9;">{score}</span>
-                </div>
-                <div class="th-strip-info">
-                    <h3>Integration Health</h3>
-                    <p>{healthy} of {total} platform tokens are healthy{' - ' + str(expired) + ' overdue for rotation' if expired else ''}</p>
-                </div>
-            </div>
-            <div class="th-strip-right">
-                <div class="th-stat"><div class="th-stat-num thg">{healthy}</div><div class="th-stat-label">Healthy</div></div>
-                <div class="th-div"></div>
-                <div class="th-stat"><div class="th-stat-num tha">{expiring}</div><div class="th-stat-label">Due Soon</div></div>
-                <div class="th-div"></div>
-                <div class="th-stat"><div class="th-stat-num thr">{expired}</div><div class="th-stat-label">Overdue</div></div>
-                <div class="th-div"></div>
-                <span class="th-badge {badge_cls}"><span class="th-badge-dot"></span>{badge_txt}</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # ── Action banners for urgent items ──
-        for t in tokens:
-            if t["status"] == "expired":
-                st.markdown(f"""<div class="th-alert th-alert-red"><div class="th-alert-left"><span>🔴</span><span class="th-alert-text"><strong>{t['name']} rotation overdue</strong> - Token has exceeded the {ROTATION_POLICY_DAYS}-day rotation policy. Schedule rotation to maintain compliance.</span></div><span class="th-alert-text" style="font-size:0.66rem;color:#64748B;">Overdue by {abs(t['days_left'])}d</span></div>""", unsafe_allow_html=True)
-            elif t["status"] == "missing":
-                st.markdown(f"""<div class="th-alert th-alert-red"><div class="th-alert-left"><span>🔴</span><span class="th-alert-text"><strong>{t['name']} token not configured</strong> - Set up credentials to enable scanning.</span></div></div>""", unsafe_allow_html=True)
-        for t in tokens:
-            if t["status"] == "expiring":
-                st.markdown(f"""<div class="th-alert th-alert-amber"><div class="th-alert-left"><span>🟡</span><span class="th-alert-text"><strong>{t['name']} rotation due in {t['days_left']}d</strong> - Approaching the {ROTATION_POLICY_DAYS}-day rotation policy deadline.</span></div></div>""", unsafe_allow_html=True)
-
-        # ── Token Cards Grid ──
-        st.markdown('<div class="sl" style="margin-top:0.75rem;">Platform Tokens</div>', unsafe_allow_html=True)
-
-        LOGO_OVERRIDES = {"Atlassian": "atlassian", "PagerDuty": "pagerduty", "GitHub": "github", "GitLab": "gitlab"}
-
-        # Render cards in rows of 4 using st.columns
-        for row_start in range(0, len(tokens), 4):
-            row_tokens = tokens[row_start:row_start + 4]
-            cols = st.columns(4)
-            for ci, t in enumerate(row_tokens):
-                # Derive icon from system name (e.g. "PagerDuty [Xolv]" -> "pagerduty")
-                base_name = t["name"].split("[")[0].split("(")[0].strip()
-                icon_name = LOGO_OVERRIDES.get(base_name, base_name.lower())
-                icon_url = f"https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/{icon_name}.png"
-
-                if t["status"] == "healthy":
-                    cls, dot, val_cls, status_label = "th-card-ok", "th-card-dot-ok", "th-card-val-ok", "Healthy"
-                    bar_cls, bar_color = "th-bar-fill-ok", "#10B981"
-                elif t["status"] == "expiring":
-                    cls, dot, val_cls = "th-card-warn", "th-card-dot-warn", "th-card-val-warn"
-                    status_label = "Due in " + str(t["days_left"]) + "d"
-                    bar_cls, bar_color = "th-bar-fill-warn", "#F59E0B"
-                elif t["status"] == "expired":
-                    cls, dot, val_cls = "th-card-crit", "th-card-dot-crit", "th-card-val-crit"
-                    status_label = "Overdue by " + str(abs(t["days_left"])) + "d"
-                    bar_cls, bar_color = "th-bar-fill-crit", "#EF4444"
+            # Last checked
+            if t["checked_at"]:
+                checked_dt = datetime.fromisoformat(t["checked_at"])
+                checked_ago = (datetime.utcnow() - checked_dt).total_seconds()
+                if checked_ago < 60:
+                    checked_str = "Just now"
+                elif checked_ago < 3600:
+                    checked_str = f"{int(checked_ago // 60)}m ago"
+                elif checked_ago < 86400:
+                    checked_str = f"{int(checked_ago // 3600)}h ago"
                 else:
-                    cls, dot, val_cls, status_label = "th-card-crit", "th-card-dot-crit", "th-card-val-crit", "Not Configured"
-                    bar_cls, bar_color = "th-bar-fill-crit", "#EF4444"
+                    checked_str = checked_dt.strftime("%b %d, %H:%M")
+            else:
+                checked_str = "-"
 
-                rotated_label = t.get("last_rotated") or "-"
-                expires_label = t.get("expires") or "-"
-                pct = t.get("pct_elapsed", 100)
-                pct_label = str(pct) + "% elapsed" if t["status"] != "expired" else "Overdue"
-                updated_by = t.get("rotated_by", "-")
-                exp_val_cls = val_cls if t["status"] != "healthy" else ""
+            # Error row (only if invalid)
+            error_row = ""
+            if t["status"] == "invalid" and t.get("error"):
+                error_row = '<div class="th-card-row"><span class="th-card-lbl">Error</span><span class="th-card-val th-card-val-crit">' + t["error"] + '</span></div>'
 
-                with cols[ci]:
-                    st.markdown(
-                        '<div class="th-card ' + cls + '">'
-                        + '<div class="th-card-hdr"><div class="th-card-plat"><img src="' + icon_url + '" onerror="this.style.display=&apos;none&apos;" /><span>' + t["name"] + '</span></div><div class="th-card-dot ' + dot + '"></div></div>'
-                        + '<div class="th-card-row"><span class="th-card-lbl">Status</span><span class="th-card-val ' + val_cls + '">' + status_label + '</span></div>'
-                        + '<div class="th-card-row"><span class="th-card-lbl">Last Rotated</span><span class="th-card-val">' + rotated_label + '</span></div>'
-                        + '<div class="th-card-row"><span class="th-card-lbl">Rotation Due</span><span class="th-card-val ' + exp_val_cls + '">' + expires_label + '</span></div>'
-                        + '<div class="th-card-row"><span class="th-card-lbl">Rotated By</span><span class="th-card-val">' + updated_by + '</span></div>'
-                        + '<div class="th-bar-wrap"><div class="th-bar-top"><span class="th-card-lbl">Token lifetime</span><span class="th-card-lbl" style="color:' + bar_color + '">' + pct_label + '</span></div>'
-                        + '<div class="th-bar-bg"><div class="th-bar-fill ' + bar_cls + '" style="width:' + str(pct) + '%"></div></div></div>'
-                        + '</div>',
-                        unsafe_allow_html=True
-                    )
-
-        st.markdown("<div style='height:1.25rem'></div>", unsafe_allow_html=True)
-
-    # ── Rotate Credentials Form ───────────────────────────────────
-    st.markdown('<div class="sl" style="margin-top:0.25rem;">Rotate Credentials</div>', unsafe_allow_html=True)
-
-    accessible = {k: s for k, s in config.SYSTEMS.items() if auth.can_manage_system(k)}
-    if not accessible:
-        st.info("No systems available.")
-        return
-
-    st.markdown('<div class="sl">System</div>', unsafe_allow_html=True)
-    sk = st.selectbox("System", list(accessible.keys()), format_func=lambda k: accessible[k]["name"], label_visibility="collapsed")
-    system = accessible[sk]
-    meta = storage.get_token_metadata(sk)
-    rot = get_rotation_entry(sk)
-    # Determine active status: has rotation metadata or legacy storage metadata, and not explicitly removed
-    is_removed = rot.get("removed", False) if rot else False
-    is_active = bool((meta or rot) and not is_removed)
-    pc, pl = ("pill-ok", "Active") if is_active else ("pill-no", "Not Configured")
-
-    # Build countdown pill HTML if rotation tracked
-    timer_html = ""
-    if is_active:
-        if rot and rot.get("created_on"):
-            rotated_dt = datetime.fromisoformat(rot["created_on"])
-        elif meta:
-            rotated_dt = datetime.fromisoformat(meta["updated_at"])
-        else:
-            rotated_dt = datetime.utcnow()
-        now_dt = datetime.now(rotated_dt.tzinfo) if rotated_dt.tzinfo else datetime.utcnow()
-        days_since = (now_dt - rotated_dt).days
-        days_left = ROTATION_POLICY_DAYS - days_since
-        if days_left <= 0:
-            timer_color = "#EF4444"
-            timer_bg = "rgba(239,68,68,0.1)"
-            timer_border = "rgba(239,68,68,0.25)"
-            timer_text = f"Overdue by {abs(days_left)}d"
-        elif days_left <= 10:
-            timer_color = "#EF4444"
-            timer_bg = "rgba(239,68,68,0.1)"
-            timer_border = "rgba(239,68,68,0.25)"
-            timer_text = f"{days_left}d remaining"
-        elif days_left <= 30:
-            timer_color = "#F59E0B"
-            timer_bg = "rgba(245,158,11,0.1)"
-            timer_border = "rgba(245,158,11,0.25)"
-            timer_text = f"{days_left}d remaining"
-        else:
-            timer_color = "#10B981"
-            timer_bg = "rgba(16,185,129,0.1)"
-            timer_border = "rgba(16,185,129,0.25)"
-            timer_text = f"{days_left}d remaining"
-        timer_html = f'<span style="display:inline-flex;align-items:center;gap:5px;background:{timer_bg};border:1px solid {timer_border};border-radius:100px;padding:2px 10px 2px 7px;font-size:0.58rem;font-weight:700;color:{timer_color};letter-spacing:0.03em;margin-left:8px;vertical-align:middle;"><span style="width:5px;height:5px;border-radius:50%;background:{timer_color};"></span>{timer_text}</span>'
-
-    # Build card metadata
-    rotated_by_display = rot.get("rotated_by", "-") if rot else (meta.get("updated_by", "Unknown") if meta else "-")
-    if rot and rot.get("created_on"):
-        created_dt = datetime.fromisoformat(rot["created_on"])
-        rotated_date_display = created_dt.strftime("%b %d, %Y at %H:%M UTC")
-    elif meta:
-        rotated_date_display = datetime.fromisoformat(meta["updated_at"]).strftime("%b %d, %Y at %H:%M UTC")
-    else:
-        rotated_date_display = "-"
-
-    card = f'<div class="card"><div class="sysh"><div><div class="sysn">{system["name"]} {timer_html}</div><div class="sysd">{system["description"]}</div></div><div style="display:flex;align-items:center;gap:8px;"><div class="pill {pc}"><span class="pdot"></span>{pl}</div></div></div>'
-    if is_active:
-        card += f'<div class="mets"><div><div class="ml">Rotated by</div><div class="mv">{rotated_by_display}</div></div><div><div class="ml">Token created</div><div class="mv">{rotated_date_display}</div></div><div><div class="ml">Rotation policy</div><div class="mv">{ROTATION_POLICY_DAYS}-day cycle</div></div></div>'
-    card += "</div>"
-
-    if is_active:
-        del_key = f"del_state_{sk}"
-        card_col, trash_col = st.columns([18, 1.5])
-        with card_col:
-            st.markdown(card, unsafe_allow_html=True)
-        with trash_col:
-            st.markdown('<div style="height:1.1rem"></div>', unsafe_allow_html=True)
-            if st.button("✕", key=f"trash_{sk}", help="Remove rotation tracking"):
-                st.session_state[del_key] = not st.session_state.get(del_key, False)
-
-        if st.session_state.get(del_key, False):
-            warn_col, _ = st.columns([20, 1])
-            with warn_col:
+            with cols[ci]:
                 st.markdown(
-                    '<div style="background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.15);border-radius:12px;padding:0.55rem 0.85rem;margin:-0.3rem 0 0.4rem 0;">'
-                    + '<span style="font-size:0.74rem;color:#F59E0B;">&#9888; This will remove rotation tracking for ' + system["name"] + ' from the console. It does not revoke the API token or stop active scans - you must update the system configuration files separately.</span>'
+                    '<div class="th-card ' + cls + '">'
+                    + '<div class="th-card-hdr"><div class="th-card-plat"><img src="' + icon_url + '" onerror="this.style.display=&apos;none&apos;" /><span>' + t["name"] + '</span></div><div class="th-card-dot ' + dot + '"></div></div>'
+                    + '<div class="th-card-row"><span class="th-card-lbl">API Status</span><span class="th-card-val ' + val_cls + '">' + status_label + '</span></div>'
+                    + '<div class="th-card-row"><span class="th-card-lbl">Last Checked</span><span class="th-card-val">' + checked_str + '</span></div>'
+                    + error_row
                     + '</div>',
                     unsafe_allow_html=True
                 )
-            btn_col1, btn_col2, btn_col3 = st.columns([8.5, 3, 8.5])
-            with btn_col2:
-                st.markdown("""<style>
-                div[data-testid="stHorizontalBlock"]:has(.confirm-del-marker) button[data-testid="stBaseButton-secondary"] {
-                    color: #EF4444 !important;
-                    border: 1.5px solid rgba(239,68,68,0.3) !important;
-                    background: transparent !important;
-                    white-space: nowrap !important;
-                }
-                div[data-testid="stHorizontalBlock"]:has(.confirm-del-marker) button[data-testid="stBaseButton-secondary"]:hover {
-                    background: rgba(239,68,68,0.1) !important;
-                    border-color: rgba(239,68,68,0.5) !important;
-                }
-                </style><div class="confirm-del-marker" style="display:none"></div>""", unsafe_allow_html=True)
-                if st.button("Confirm removal", key=f"del_confirm_{sk}", use_container_width=True):
-                    try:
-                        rmeta = load_rotation_metadata()
-                        if sk in rmeta:
-                            rmeta[sk]["removed"] = True
-                        else:
-                            rmeta[sk] = {"removed": True}
-                        ROTATION_META_FILE.write_text(json.dumps(rmeta, indent=2))
-                        try:
-                            log_event(sk, "integration_removed", user["email"], {"system_name": system["name"]})
-                        except Exception:
-                            pass
-                        st.session_state[del_key] = False
-                        st.success(f"**{system['name']}** removed from console.")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Failed to remove: {e}")
-    else:
-        st.markdown(card, unsafe_allow_html=True)
-
-    # ── Log Rotation Form ──────────────────────────────────────────
-    st.markdown('<div class="sl">Log Rotation</div>', unsafe_allow_html=True)
-
-    known_users = get_known_users()
-    current_email = user.get("email", "")
-    # Build user list: current user first, then others
-    user_options = [current_email] + [u for u in known_users if u != current_email] if current_email else known_users
-
-    rc1, rc2 = st.columns(2)
-    with rc1:
-        rotated_by = st.selectbox("Rotated by", user_options, key=f"rot_by_{sk}", help="Who performed the rotation in the platform")
-    with rc2:
-        created_on = st.date_input("Token created on", value=datetime.utcnow().date(), key=f"rot_date_{sk}", help="When the token was created in the platform")
-
-    # Disable Save if values match last saved state
-    last_save_key = f"last_save_{sk}"
-    last_save = st.session_state.get(last_save_key, {})
-    form_unchanged = (last_save.get("rotated_by") == rotated_by and last_save.get("created_on") == str(created_on))
-
-    st.markdown("<div style='height:0.3rem'></div>", unsafe_allow_html=True)
-    if st.button("Save", type="primary", use_container_width=True, key=f"save_rot_{sk}", disabled=form_unchanged):
-        save_rotation_entry(sk, rotated_by, datetime.combine(created_on, datetime.min.time()).isoformat(), current_email)
-        try:
-            log_event(sk, "rotation_logged", current_email, {
-                "system_name": system["name"],
-                "rotated_by": rotated_by,
-                "created_on": str(created_on),
-            })
-        except Exception:
-            pass
-        st.session_state[last_save_key] = {"rotated_by": rotated_by, "created_on": str(created_on)}
-        st.success(f"Rotation for **{system['name']}** saved.")
-        st.rerun()
 
 
 # ------------------------------------------------------------------
@@ -2637,7 +2399,7 @@ def show_login_screen_with_dev():
                 </div>
                 <div class="lcard-pill">
                     <span class="lcard-pill-dot" style="background:#028090;"></span>
-                    <span class="lcard-pill-text">Token Health</span>
+                    <span class="lcard-pill-text">Integrations</span>
                 </div>
                 <div class="lcard-pill lcard-pill-ai">
                     {ai_star}

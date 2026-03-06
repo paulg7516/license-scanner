@@ -1,0 +1,27 @@
+{
+  "pagerduty": {
+    "valid": true,
+    "checked_at": "2026-03-06T00:35:44.610359",
+    "error": null
+  },
+  "gitlab_xolv": {
+    "valid": true,
+    "checked_at": "2026-03-06T00:35:44.799794",
+    "error": null
+  },
+  "atlassian_catalight": {
+    "valid": true,
+    "checked_at": "2026-03-06T00:35:45.537587",
+    "error": null
+  },
+  "gitlab_catalight": {
+    "valid": true,
+    "checked_at": "2026-03-06T00:35:44.981937",
+    "error": null
+  },
+  "atlassian_xolv": {
+    "valid": true,
+    "checked_at": "2026-03-06T00:35:45.155558",
+    "error": null
+  }
+}
