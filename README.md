@@ -11,7 +11,6 @@
 ### 1. Prerequisites
 
 - Python 3.10 or newer
-- An Azure AD App Registration (see below)
 
 ### 2. Install dependencies
 
