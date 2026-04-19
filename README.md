@@ -2,7 +2,7 @@
 
   Identifies unused SaaS licenses across your vendor stack and delivers AI-generated executive summaries for cost reviews.
   
-  Built with **Streamlit** (Python), secured with **Azure AD SSO** and **AES encryption** for stored API credentials. Powered by **Claude** for executive-grade summary generation. 
+  Built with **Streamlit**, **Python**, **Claude API** secured with **AES encryption**. 
 
 ---
 
